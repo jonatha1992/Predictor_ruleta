@@ -36,7 +36,7 @@ class Predictor:
         self.l2_lambda = 0.001
         self.dropout_rate = 0.01
         self.learning_rate = 0.003  # Tasa de aprendizaje inicial
-        self.epoc = 70
+        self.epoc = 50
         self.batchSize = 512
 
         self.model = self._crear_modelo()
@@ -66,8 +66,9 @@ class Predictor:
             )
         )
         model.add(Dropout(self.dropout_rate))
-        model.add(
-            GRU(self.gru, return_sequences=True, kernel_regularizer=l2(self.l2_lambda))
+        model.add( GRU(self.gru, return_sequences=True,
+                kernel_regularizer=l2(self.l2_lambda)
+                )
         )  # Cambiar a capa GRU
         model.add(Dropout(self.dropout_rate))
         model.add(
@@ -107,7 +108,9 @@ class Predictor:
     def predecir(self):
         secuencia_entrada = np.array(self.contador.numeros[-10:]).reshape(1, 10, 1)
         predicciones = self.model.predict(secuencia_entrada, verbose=0)
-        self.resultados = sorted(predicciones[0].argsort()[-self.numeros_a_predecir:][::-1])
+        self.resultados = sorted(
+            predicciones[0].argsort()[-self.numeros_a_predecir :][::-1]
+        )
         print(self.resultados)
 
     # Verifica si un número coincide con los resultados predichos y actualiza los contadores.
@@ -116,7 +119,7 @@ class Predictor:
         es_vecino_cercano = False
         es_vecino_lejano = False
         self.contador.incrementar_ingresados(numero)
-        
+
         if self.contador.ingresados > 10:
             self.contador.incrementar_jugados()
 
@@ -153,7 +156,6 @@ class Predictor:
             self.contador.reiniciar_sin_salir_nada()
         else:
             self.contador.actualizar_sin_salir_nada()
-                
 
     # Actualiza el DataFrame con el número ingresado y los resultados de las predicciones.
     def actualizar_dataframe(self, numero_ingresado):
@@ -162,7 +164,6 @@ class Predictor:
         self.df_nuevo.loc[
             len(self.df_nuevo), "Numero jugado"
         ] = self.contador.ingresados
-
 
     # Guarda el DataFrame en un archivo de Excel.
     def guardar_excel(self):
@@ -221,6 +222,7 @@ class Predictor:
             "learning rate": self.learning_rate,
             "epoca": self.epoc,
             "batch_size": self.batchSize,
+            "Nros a Predecir": self.numeros_a_predecir,
         }
 
         # Convertir el diccionario en un DataFrame de Pandas
@@ -253,7 +255,8 @@ def main():
         simulacion.numeros_aleatorios2,
         simulacion.numeros_aleatorios3,
         simulacion.numeros_aleatorios4,
-        simulacion.numeros_aleatorios5
+        simulacion.numeros_aleatorios5,
+        simulacion.numeros_aleatorios6,
     ]
     while True:
         for current_array in all_arrays:  # Recorrer cada lista de las 3 listas
@@ -287,6 +290,7 @@ def main():
 
         print("Finalizo la simulacion")
         break
+
 
 # Si el script se ejecuta como programa principal, llama a la función main().
 if __name__ == "__main__":
