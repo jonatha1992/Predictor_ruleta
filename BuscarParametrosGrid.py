@@ -60,7 +60,7 @@ class HyperparameterTuner:
         early_stopping_loss = EarlyStopping(monitor="loss", patience=10)
         early_stopping_accuracy = EarlyStopping(monitor="accuracy", patience=10)
         for epoch in [30, 40, 50]:
-            for batch in [128, 256, 512]:
+            for batch in [256, 512]:
     
                 tuner = GridSearch(self.build_model,
                         objective='accuracy',
@@ -74,6 +74,7 @@ class HyperparameterTuner:
                                 callbacks=[early_stopping_loss, early_stopping_accuracy])
                
                 self.save_results_to_excel(tuner,"resultados_parametros.xlsx", epoch, batch)
+        
         print("se guardo todo en excel")
 
     def save_results_to_excel(self, tuner,filename, epoch, batch_size):
