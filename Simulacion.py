@@ -4,7 +4,7 @@ import pandas as pd
 import tensorflow as tf
 import os
 from Entity.Contador import Contador
-from Entity.Simulacion import Simulacion
+from Entity.Numeros_Simulacion import Simulador
 from datetime import datetime
 from Vecinos import vecinosCercanos, vecinosLejanos
 from tensorflow.keras.layers import LSTM, Dense, Dropout, GRU
@@ -20,29 +20,23 @@ class Predictor:
     # Inicializa el objeto de la clase con un nombre de archivo y crea el modelo.
     def __init__(self, filename):
         self.filename = filename
-        self.df=0
+        self.df = 0
         self.df = pd.read_excel(filename, sheet_name="Salidos")
-        
-        self.numeros = self.df["Salidos"].values.tolist()
 
         self.contador = Contador()
+        self.contador.numeros = self.df["Salidos"].values.tolist()
 
         self.resultados = []
-        
+
         # Parametros
-<<<<<<< HEAD:Simulacion.py
-        self.lsmt=256
-        self.gru=128
-        self.lsmt2=64
-        self.l2_lambda = 0.003
-        self.dropout_rate = 0.05
-        self.learning_rate = 0.01  # Tasa de aprendizaje inicial
-=======
+        self.numeros_a_predecir = 3
+        self.lsmt = 256
+        self.gru = 128
+        self.lsmt2 = 64
         self.l2_lambda = 0.001
         self.dropout_rate = 0.01
-        self.learning_rate = 0.001  # Tasa de aprendizaje inicial
->>>>>>> parent of 5fabcd3 (todos los cambios):Simulaciony.py
-        self.epoc = 50
+        self.learning_rate = 0.003  # Tasa de aprendizaje inicial
+        self.epoc = 70
         self.batchSize = 512
 
         self.model = self._crear_modelo()
@@ -90,16 +84,9 @@ class Predictor:
             loss="categorical_crossentropy", optimizer=optimizer, metrics=["accuracy"]
         )
 
-        # Usar la técnica de Early Stopping
-        early_stopping = EarlyStopping(monitor="val_loss", patience=10)
-
         # Entrenar modelo
         model.fit(
-            secuencias,
-            siguientes_numeros,
-            epochs=self.epoc,
-            batch_size=self.batchSize,
-            callbacks=[early_stopping],  # Agregar el callback de Early Stopping
+            secuencias, siguientes_numeros, epochs=self.epoc, batch_size=self.batchSize
         )
 
         return model
@@ -109,87 +96,65 @@ class Predictor:
     def _crear_secuencias(self):
         secuencias = []
         siguientes_numeros = []
-        for i in range(len(self.numeros) - 11):
-            secuencias.append(self.numeros[i : i + 10])
-            siguientes_numeros.append(self.numeros[i + 10])
+        for i in range(len(self.contador.numeros) - 11):
+            secuencias.append(self.contador.numeros[i : i + 10])
+            siguientes_numeros.append(self.contador.numeros[i + 10])
         secuencias = pad_sequences(np.array(secuencias))
         siguientes_numeros = to_categorical(np.array(siguientes_numeros))
         return secuencias, siguientes_numeros
 
     # Predice los próximos números.
     def predecir(self):
-        secuencia_entrada = np.array(self.numeros[-10:]).reshape(1, 10, 1)
+        secuencia_entrada = np.array(self.contador.numeros[-10:]).reshape(1, 10, 1)
         predicciones = self.model.predict(secuencia_entrada, verbose=0)
-        # self.resultados = sorted(np.random.choice(37, size=5, p=predicciones[0]))
-        # indices_mayores = predicciones[0].argsort()[-3:][::-1] # Esto te dará los índices de los tres números con las mayores probabilidades
-        self.resultados = sorted(predicciones[0].argsort()[-5:][::-1])
+        self.resultados = sorted(predicciones[0].argsort()[-self.numeros_a_predecir:][::-1])
         print(self.resultados)
-        
+
     # Verifica si un número coincide con los resultados predichos y actualiza los contadores.
     def verificar_numero(self, numero):
         acierto = False
         es_vecino_cercano = False
         es_vecino_lejano = False
-        self.contador.ingresados += 1
-
-        if self.contador.ingresados > 10:
-            self.contador.jugados += 1
-            if numero in self.resultados:
-                self.contador.aciertos += 1
-                self.contador.sin_aciertos = 0
-                print(
-                    f"¡Acierto! El número {numero} coincide con uno de los resultados."
-                )
-                self.df_nuevo.at[len(self.df_nuevo), "Acierto"] = "acierto"
-                acierto = True
-            else:
-                self.contador.sin_aciertos += 1
-
-            for vecino in self.resultados:
-                if numero in vecinosCercanos[vecino]:
-                    self.contador.sin_vecinos_cercanos = 0
-                    self.contador.acierto_vecinos_cercanos += 1
-                    es_vecino_cercano = True
-                    print(f"¡Vecino! El número {numero} es vecino cercano de {vecino}.")
-
-                if numero in vecinosLejanos[vecino]:
-                    self.contador.sin_vecinos_lejanos = 0
-                    self.contador.acierto_vecinos_lejanos += 1
-                    es_vecino_lejano = True
-                    print(f"¡Vecino! El número {numero} es vecino lejano de {vecino}.")
-
-            if es_vecino_cercano:
-                self.df_nuevo.at[len(self.df_nuevo), "Vecino"] = "VC"
-            else:
-                self.contador.sin_vecinos_cercanos += 1
-            if es_vecino_lejano:
-                self.df_nuevo.at[len(self.df_nuevo), "Vecino lejano"] = "VL"
-            else:
-                self.contador.sin_vecinos_lejanos += 1
-
-            if acierto or es_vecino_cercano or es_vecino_lejano:
-                self.contador.aciertos_totales += 1
-
-            if self.contador.sin_aciertos > self.contador.max_sin_acierto:
-                self.contador.max_sin_acierto = self.contador.sin_aciertos
-
-            if (
-                self.contador.sin_vecinos_cercanos
-                > self.contador.max_sin_vecinos_cercanos
-            ):
-                self.contador.max_sin_vecinos_cercanos = (
-                    self.contador.sin_vecinos_cercanos
-                )
-
-            if (
-                self.contador.sin_vecinos_lejanos
-                > self.contador.max_sin_vecinos_lejanos
-            ):
-                self.contador.max_sin_vecinos_lejanos = (
-                    self.contador.sin_vecinos_lejanos
-                )
-        self.numeros.append(numero)
+        self.contador.incrementar_ingresados(numero)
         
+        if self.contador.ingresados > 10:
+            self.contador.incrementar_jugados()
+
+        if numero in self.resultados:
+            self.contador.incrementar_aciertos()
+            print(f"¡Acierto! El número {numero} coincide con uno de los resultados.")
+            self.df_nuevo.at[len(self.df_nuevo), "Acierto"] = "acierto"
+            acierto = True
+        else:
+            self.contador.actualizar_sin_aciertos()
+
+        for vecino in self.resultados:
+            if numero in vecinosCercanos[vecino]:
+                self.contador.incrementar_aciertos_vecinos_cercanos()
+                es_vecino_cercano = True
+                print(f"¡Vecino! El número {numero} es vecino cercano de {vecino}.")
+
+            if numero in vecinosLejanos[vecino]:
+                self.contador.incrementar_aciertos_vecinos_lejanos()
+                es_vecino_lejano = True
+                print(f"¡Vecino! El número {numero} es vecino lejano de {vecino}.")
+
+        if es_vecino_cercano:
+            self.df_nuevo.at[len(self.df_nuevo), "Vecino"] = "VC"
+        else:
+            self.contador.actualizar_sin_vecinos_cercanos()
+
+        if es_vecino_lejano:
+            self.df_nuevo.at[len(self.df_nuevo), "Vecino lejano"] = "VL"
+        else:
+            self.contador.actualizar_sin_vecinos_lejanos()
+
+        if acierto or es_vecino_cercano or es_vecino_lejano:
+            self.contador.reiniciar_sin_salir_nada()
+        else:
+            self.contador.actualizar_sin_salir_nada()
+                
+
     # Actualiza el DataFrame con el número ingresado y los resultados de las predicciones.
     def actualizar_dataframe(self, numero_ingresado):
         self.df_nuevo.loc[len(self.df_nuevo) + 1, "Salidos"] = (numero_ingresado,)
@@ -197,6 +162,7 @@ class Predictor:
         self.df_nuevo.loc[
             len(self.df_nuevo), "Numero jugado"
         ] = self.contador.ingresados
+
 
     # Guarda el DataFrame en un archivo de Excel.
     def guardar_excel(self):
@@ -220,8 +186,8 @@ class Predictor:
 
     # Borra el último número ingresado y actualiza el contador.
     def borrar(self):
-        if self.numeros:
-            self.numeros.pop()
+        if self.contador.numeros:
+            self.contador.numeros.pop()
             self.contador.ingresados -= 1
             self.contador.jugados -= 1
             self.df_nuevo = self.df_nuevo[
@@ -243,6 +209,7 @@ class Predictor:
             "Juego fecha y hora": fecha_hora_actual,
             "Numeros jugados": self.contador.jugados,
             "Aciertos Totales": self.contador.aciertos_totales,
+            "Maximo sin salir totales": self.contador.Maximo_Sin_salir_nada,
             "Aciertos de resultados": self.contador.aciertos,
             "Aciertos de vecinos cercanos": self.contador.acierto_vecinos_cercanos,
             "Aciertos de vecinos lejanos": self.contador.acierto_vecinos_lejanos,
@@ -279,21 +246,23 @@ class Predictor:
 def main():
     gc.collect()
     predictor = Predictor("datos.xlsx")
-    
-    simulacion = Simulacion()
+
+    simulacion = Simulador()
     all_arrays = [
         simulacion.numeros_aleatorios,
         simulacion.numeros_aleatorios2,
         simulacion.numeros_aleatorios3,
+        simulacion.numeros_aleatorios4,
+        simulacion.numeros_aleatorios5
     ]
     while True:
         for current_array in all_arrays:  # Recorrer cada lista de las 3 listas
             for numero in current_array:  # Recorrer cada número en la lista actual
                 opcion = str(numero)
-
                 if opcion.lower() == "salir":
                     predictor.generar_reporte()
                     predictor.contador = Contador()
+                    predictor.contador.numeros = predictor.df["Salidos"].values.tolist()
                     break  # Salir de la función main
 
                 if opcion.lower() == "-":
@@ -310,15 +279,14 @@ def main():
 
                     predictor.verificar_numero(numero)
                     predictor.predecir()
-                    predictor.actualizar_dataframe(numero)
-                    predictor.mostrar_resultados()
+                    # predictor.actualizar_dataframe(numero)
+                    # predictor.mostrar_resultados()
 
                 except ValueError:
                     print("Valor ingresado no válido. Inténtalo nuevamente.")
-        
+
         print("Finalizo la simulacion")
         break
-
 
 # Si el script se ejecuta como programa principal, llama a la función main().
 if __name__ == "__main__":

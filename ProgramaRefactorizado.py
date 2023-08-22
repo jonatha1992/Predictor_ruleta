@@ -3,7 +3,7 @@ import pandas as pd
 import tensorflow as tf
 import os
 from Entity.Contador import Contador 
-from Entity.Simulacion import  Simulacion
+from Entity.Numeros_Simulacion import  Simulador
 from datetime import datetime
 from Vecinos import vecinosCercanos, vecinosLejanos
 from tensorflow.keras.layers import LSTM, Dense, Dropout , GRU
