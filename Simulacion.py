@@ -31,8 +31,8 @@ class Predictor:
         # Parametros
         self.numeros_a_predecir = 3
         self.lsmt = 256
-        self.gru = 128
-        self.lsmt2 = 64
+        self.gru = 224
+        self.lsmt2 = 128
         self.l2_lambda = 0.001
         self.dropout_rate = 0.01
         self.learning_rate = 0.003  # Tasa de aprendizaje inicial

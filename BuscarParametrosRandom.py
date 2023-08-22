@@ -30,7 +30,7 @@ class HyperparameterTuner:
             )
         )
         model.add(
-            Dropout(rate=hp.Choice("dropout_rate", values=[0.05, 0.01, 0.02, 0.1]))
+            Dropout(rate=hp.Choice("dropout_rate", values=[0.05, 0.01]))
         )
         model.add(GRU(units=hp.Int("gru_units", min_value=128, max_value=256, step=32)))
         model.add(
