@@ -24,10 +24,10 @@ class HyperparameterTuner:
 
     def build_model(self, hp):
         model = Sequential()
-        model.add(LSTM(units=hp.Int("lstm_units", min_value=256, max_value=512, stepp=32 ), input_shape=(10, 1), return_sequences=True))
+        model.add(LSTM(units=hp.Int("lstm_units", min_value=256, max_value=512, step=32 ), input_shape=(10, 1), return_sequences=True))
         model.add(Dropout(rate=hp.Choice("dropout_rate", values=[0.05, 0.01, 0.02,0.1])))
-        model.add(GRU(units=hp.Int("gru_units", min_value=128, max_value=256 ,stepp= 32)))
-        model.add(Dense(units=hp.Int("lstm2_units", min_value=64, max_value=128 ,stepp= 32), activation='relu', kernel_regularizer=L2(hp.Choice("l2_lambda", values=[0.001,0.002,0.003]))))
+        model.add(GRU(units=hp.Int("gru_units", min_value=128, max_value=256 ,step= 32)))
+        model.add(Dense(units=hp.Int("lstm2_units", min_value=64, max_value=128 ,step= 32), activation='relu', kernel_regularizer=L2(hp.Choice("l2_lambda", values=[0.001,0.002,0.003]))))
         model.add(Dense(37, activation='softmax'))
         model.compile(optimizer=Adam(learning_rate=hp.Choice("learning_rate", values=[0.001,0.002,0.003])), loss='categorical_crossentropy', metrics=['accuracy'])
         return model
@@ -60,7 +60,7 @@ class HyperparameterTuner:
         early_stopping_loss = EarlyStopping(monitor="loss", patience=10)
         early_stopping_accuracy = EarlyStopping(monitor="accuracy", patience=10)
         for epoch in [30, 40, 50]:
-            for batch in [128, 256, 512]:
+            for batch in [ 256, 512]:
     
                 tuner = GridSearch(self.build_model,
                         objective='accuracy',
