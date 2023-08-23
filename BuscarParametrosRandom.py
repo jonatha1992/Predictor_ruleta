@@ -22,30 +22,40 @@ class HyperparameterTuner:
 
     def build_model(self, hp):
         model = Sequential()
+        # Define l2_lambda, dropout_rate, and learning_rate once
+        l2_lambda_value = hp.Choice("l2_lambda", values=[0.001, 0.002, 0.003])
+        dropout_rate_value = hp.Choice("dropout_rate", values=[0.05, 0.01])
+        learning_rate_value = hp.Choice("learning_rate", values=[0.001, 0.003])
+        
         model.add(
             LSTM(
                 units=hp.Int("lstm_units", min_value=256, max_value=512, step=32),
                 input_shape=(10, 1),
                 return_sequences=True,
+                kernel_regularizer=L2(l2_lambda_value)
             )
         )
         model.add(
-            Dropout(rate=hp.Choice("dropout_rate", values=[0.05, 0.01]))
+            Dropout(rate=dropout_rate_value)
         )
-        model.add(GRU(units=hp.Int("gru_units", min_value=128, max_value=256, step=32)))
+        model.add(GRU(units=hp.Int("gru_units", min_value=128, max_value=256, step=32),
+                                   kernel_regularizer=L2(l2_lambda_value)
+                                   ))
+        model.add(
+            Dropout(rate=dropout_rate_value)
+        )
         model.add(
             Dense(
                 units=hp.Int("lstm2_units", min_value=32, max_value=64, step=32),
                 activation="relu",
-                kernel_regularizer=L2(
-                    hp.Choice("l2_lambda", values=[0.001, 0.002, 0.003])
+                kernel_regularizer=L2(l2_lambda_value)
                 ),
             )
-        )
+        
         model.add(Dense(37, activation="softmax"))
         model.compile(
             optimizer=Adam(
-                learning_rate=hp.Choice("learning_rate", values=[0.001, 0.002, 0.003])
+                learning_rate=learning_rate_value
             ),
             loss="categorical_crossentropy",
             metrics=["accuracy"],
@@ -104,7 +114,7 @@ class HyperparameterTuner:
                 )
 
                 self.save_results_to_excel(
-                    tuner, "resultados_parametros.xlsx", epoch, batch
+                    tuner, "resultados_parametros_random.xlsx", epoch, batch
                 )
         print("se guardo todo en excel")
 
