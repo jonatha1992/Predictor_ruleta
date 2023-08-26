@@ -92,8 +92,8 @@ class HyperparameterTuner:
         early_stopping_loss = EarlyStopping(monitor="loss", patience=10)
         early_stopping_accuracy = EarlyStopping(monitor="accuracy", patience=10)
 
-        for epoch in [30, 40, 50]:
-            for batch in [256, 512]:
+        for epoch in [30,50 ,70 ]:
+            for batch in [512, 1024]:
                 tuner = RandomSearch(
                     self.build_model,
                     objective="accuracy",
