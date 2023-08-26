@@ -68,15 +68,6 @@ class HyperparameterTuner:
             metrics=['accuracy']
         )
         return model
-        # model.add(LSTM(units=hp.Int("lstm_units", min_value=256, max_value=512, step=32 ), input_shape=(10, 1), return_sequences=True, kernel_regularizer=L2(hp.Choice("l2_lambda", values=[0.001,0.002,0.003])))
-        # model.add(Dropout(rate=hp.Choice("dropout_rate", values=[0.05, 0.01])))
-        # model.add(GRU(units=hp.Int("gru_units", min_value=128, max_value=256 ,step= 32, return_sequences=True, kernel_regularizer=L2(hp.Choice("l2_lambda", values=[0.001,0.002,0.003]))))
-        # model.add(Dropout(rate=hp.Choice("dropout_rate", values=[0.05, 0.01])))
-        # model.add(Dense(units=hp.Int("lstm2_units", min_value=64, max_value=128 ,step= 32), activation='relu', kernel_regularizer=L2(hp.Choice("l2_lambda", values=[0.001,0.002,0.003]))))
-        # model.add(Dropout(rate=hp.Choice("dropout_rate", values=[0.05, 0.01])))
-        # model.add(Dense(37, activation='softmax'))
-        # model.compile(optimizer=Adam(learning_rate=hp.Choice("learning_rate", values=[0.001,0.002,0.003])), loss='categorical_crossentropy', metrics=['accuracy'])
-        # return model
 
     def _crear_secuencias(self):
         secuencias = []
@@ -105,8 +96,8 @@ class HyperparameterTuner:
 
         early_stopping_loss = EarlyStopping(monitor="loss", patience=10)
         early_stopping_accuracy = EarlyStopping(monitor="accuracy", patience=10)
-        for epoch in [30, 40, 50]:
-            for batch in [256, 512]:
+        for epoch in [ 50 ,60,70]:
+            for batch in [512, 1024]:
         
                 tuner = GridSearch(self.build_model,
                         objective='accuracy',
