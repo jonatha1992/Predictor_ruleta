@@ -30,14 +30,14 @@ class Predictor:
 
         # Parametros
         self.numeros_a_predecir = 4
-        self.lsmt = 256
-        self.gru = 224
+        self.lsmt = 352
+        self.gru = 256
         self.lsmt2 = 128
         self.l2_lambda = 0.001
         self.dropout_rate = 0.01
         self.learning_rate = 0.003  # Tasa de aprendizaje inicial
         self.epoc = 50
-        self.batchSize =1024
+        self.batchSize =512
 
         self.model = self._crear_modelo()
         # self.guardar_modelo()
