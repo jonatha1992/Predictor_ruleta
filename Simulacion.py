@@ -1,5 +1,7 @@
 import numpy as np
 import gc
+from openpyxl import load_workbook
+from openpyxl.styles import Alignment
 import pandas as pd
 import tensorflow as tf
 import os
@@ -29,7 +31,8 @@ class Predictor:
         self.resultados = []
 
         # Parametros
-        self.numeros_a_predecir = 4
+        self.numerosAnteriores= 7
+        self.numeros_a_predecir = 2 
         self.lsmt = 352
         self.gru = 256
         self.lsmt2 = 128
@@ -40,7 +43,7 @@ class Predictor:
         self.batchSize =512
 
         self.model = self._crear_modelo()
-        # self.guardar_modelo()
+        #self.guardar_modelo()
 
         # # Ruta relativa a la carpeta "modelo" en el mismo directorio que tu archivo de código
         # modelo_path = 'Modelo/mi_modelo'
@@ -60,13 +63,13 @@ class Predictor:
         model.add(
             LSTM(
                 self.lsmt,  # Incrementar el número de unidades en la primera capa LSTM
-                input_shape=(10, 1),
+                input_shape=(self.numerosAnteriores, 1),
                 return_sequences=True,
                 kernel_regularizer=l2(self.l2_lambda),
             )
         )
         model.add(Dropout(self.dropout_rate))
-        model.add( GRU(self.gru, return_sequences=True,
+        model.add( LSTM(self.gru, return_sequences=True,
                 kernel_regularizer=l2(self.l2_lambda)
                 )
         )  # Cambiar a capa GRU
@@ -97,16 +100,16 @@ class Predictor:
     def _crear_secuencias(self):
         secuencias = []
         siguientes_numeros = []
-        for i in range(len(self.contador.numeros) - 11):
-            secuencias.append(self.contador.numeros[i : i + 10])
-            siguientes_numeros.append(self.contador.numeros[i + 10])
+        for i in range(len(self.contador.numeros) - 8):
+            secuencias.append(self.contador.numeros[i : i + 7])
+            siguientes_numeros.append(self.contador.numeros[i + 7])
         secuencias = pad_sequences(np.array(secuencias))
         siguientes_numeros = to_categorical(np.array(siguientes_numeros))
         return secuencias, siguientes_numeros
 
     # Predice los próximos números.
     def predecir(self):
-        secuencia_entrada = np.array(self.contador.numeros[-10:]).reshape(1, 10, 1)
+        secuencia_entrada = np.array(self.contador.numeros[-7:]).reshape(1, 7, 1)
         predicciones = self.model.predict(secuencia_entrada, verbose=0)
         self.resultados = sorted(
             predicciones[0].argsort()[-self.numeros_a_predecir :][::-1]
@@ -169,7 +172,10 @@ class Predictor:
     def guardar_excel(self):
         self.generar_reporte()
         self.df_nuevo.to_excel("Datos.xlsx", sheet_name="Salidos", index=False)
+      
 
+      
+        
     # Muestra los resultados y las estadísticas.
     def mostrar_resultados(self):
         print(self.df_nuevo.tail(10))
@@ -223,7 +229,9 @@ class Predictor:
             "epoca": self.epoc,
             "batch_size": self.batchSize,
             "Nros a Predecir": self.numeros_a_predecir,
-        }
+            "Nros Anteriores" : self.numerosAnteriores,
+            "Efectividad" : self.contador.sacarEfectividad()
+            }
 
         # Convertir el diccionario en un DataFrame de Pandas
         df = pd.DataFrame([datos])
@@ -251,12 +259,8 @@ def main():
 
     simulacion = Simulador()
     all_arrays = [
-        simulacion.numeros_aleatorios,
-        simulacion.numeros_aleatorios2,
-        simulacion.numeros_aleatorios3,
-        simulacion.numeros_aleatorios4,
-        simulacion.numeros_aleatorios5,
-        simulacion.numeros_aleatorios6,
+        simulacion.numeros_aleatorios7,
+        simulacion.numeros_aleatorios8
     ]
     while True:
         for current_array in all_arrays:  # Recorrer cada lista de las 3 listas
@@ -289,6 +293,7 @@ def main():
                     print("Valor ingresado no válido. Inténtalo nuevamente.")
 
         print("Finalizo la simulacion")
+        os.system("start excel Reportes.xlsx")
         break
 
 
