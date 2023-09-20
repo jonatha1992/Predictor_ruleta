@@ -16,6 +16,7 @@ class Contador:
         self.aciertos_totales = 0
         self.Sin_salir_nada = 0
         self.Maximo_Sin_salir_nada = 0
+         
         
     def incrementar_ingresados(self, numero):
         self.ingresados += 1
@@ -34,17 +35,17 @@ class Contador:
     def incrementar_aciertos(self):
         self.aciertos += 1
         self.sin_aciertos = 0
-        self.aciertos_totales += 1
+        # self.aciertos_totales += 1
 
     def incrementar_aciertos_vecinos_cercanos(self):
         self.acierto_vecinos_cercanos += 1
         self.sin_vecinos_cercanos = 0
-        self.aciertos_totales += 1
+        # self.aciertos_totales += 1
 
     def incrementar_aciertos_vecinos_lejanos(self):
         self.acierto_vecinos_lejanos += 1
         self.sin_vecinos_lejanos = 0
-        self.aciertos_totales += 1
+        # self.aciertos_totales += 1
 
     def actualizar_sin_aciertos(self):
         self.sin_aciertos += 1
@@ -67,6 +68,9 @@ class Contador:
             self.Maximo_Sin_salir_nada = self.Sin_salir_nada
     
     def reiniciar_sin_salir_nada(self):
+        self.aciertos_totales += 1
         self.Sin_salir_nada = 0
         
+    def sacarEfectividad(self):
+        return (self.aciertos_totales / self.jugados)*100
         
