@@ -26,7 +26,7 @@ class Contador:
         self.ingresados -= 1
         self.numeros.pop()
         
-        if self.ingresados > 10 :  
+        if self.ingresados > 7 :  
             self.jugados -= 1
         
     def incrementar_jugados(self):
@@ -35,17 +35,14 @@ class Contador:
     def incrementar_aciertos(self):
         self.aciertos += 1
         self.sin_aciertos = 0
-        # self.aciertos_totales += 1
 
     def incrementar_aciertos_vecinos_cercanos(self):
         self.acierto_vecinos_cercanos += 1
         self.sin_vecinos_cercanos = 0
-        # self.aciertos_totales += 1
 
     def incrementar_aciertos_vecinos_lejanos(self):
         self.acierto_vecinos_lejanos += 1
         self.sin_vecinos_lejanos = 0
-        # self.aciertos_totales += 1
 
     def actualizar_sin_aciertos(self):
         self.sin_aciertos += 1
@@ -72,5 +69,5 @@ class Contador:
         self.Sin_salir_nada = 0
         
     def sacarEfectividad(self):
-        return (self.aciertos_totales / self.jugados)*100
+        return (self.aciertos_totales / self.jugados) 
         

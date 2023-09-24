@@ -8,7 +8,7 @@ import os
 from Entity.Contador import Contador
 from Entity.Numeros_Simulacion import Simulador
 from datetime import datetime
-from Vecinos import vecinosCercanos, vecinosLejanos
+from Vecinos import vecinosCercanos, vecinosLejanos,vecinos3Lugares
 from tensorflow.keras.layers import LSTM, Dense, Dropout, GRU
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.preprocessing.sequence import pad_sequences
@@ -32,27 +32,26 @@ class Predictor:
 
         # Parametros
         self.numerosAnteriores= 7
-        self.numeros_a_predecir = 2 
+        self.numeros_a_predecir =  10
         self.lsmt = 352
         self.gru = 256
         self.lsmt2 = 128
         self.l2_lambda = 0.001
         self.dropout_rate = 0.01
-        self.learning_rate = 0.003  # Tasa de aprendizaje inicial
-        self.epoc = 50
+        self.learning_rate = 0.003  
+        self.epoc = 100
         self.batchSize =512
+        self.umbral_probilidad= 0.5
 
-        self.model = self._crear_modelo()
-        #self.guardar_modelo()
 
-        # # Ruta relativa a la carpeta "modelo" en el mismo directorio que tu archivo de código
-        # modelo_path = 'Modelo/mi_modelo'
+        # Ruta relativa a la carpeta "modelo" en el mismo directorio que tu archivo de código
+        modelo_path = 'Modelo/mi_modelo'
 
-        # if os.path.exists(modelo_path): # Verifica si ya hay un modelo guardado
-        #     self.model = load_model(modelo_path) # Carga el modelo guardado si existe
-        # else:
-        #     self.model = self._crear_modelo()
-        #     self.guardar_modelo() # Guarda el modelo después de entrenarlo
+        if os.path.exists(modelo_path): # Verifica si ya hay un modelo guardado
+            self.model = load_model(modelo_path) # Carga el modelo guardado si existe
+        else:
+            self.model = self._crear_modelo()
+            self.guardar_modelo() # Guarda el modelo después de entrenarlo
         self.df_nuevo = self.df.copy()
 
     # Crea el modelo de red neuronal LSTM.
@@ -109,12 +108,23 @@ class Predictor:
 
     # Predice los próximos números.
     def predecir(self):
+        # secuencia_entrada = np.array(self.contador.numeros[-7:]).reshape(1, 7, 1)
+        # predicciones = self.model.predict(secuencia_entrada, verbose=0)
+        # self.resultados = sorted(
+        #     predicciones[0].argsort()[-self.numeros_a_predecir :][::-1]
+        # )
+        # print(self.resultados)
         secuencia_entrada = np.array(self.contador.numeros[-7:]).reshape(1, 7, 1)
         predicciones = self.model.predict(secuencia_entrada, verbose=0)
-        self.resultados = sorted(
-            predicciones[0].argsort()[-self.numeros_a_predecir :][::-1]
-        )
-        print(self.resultados)
+        
+        # Filtrar predicciones basadas en el umbral de probabilidad
+        predicciones_filtradas = [i for i, probabilidad in enumerate(predicciones[0]) if probabilidad > self.umbral_probilidad]
+        
+        # Ordenar las predicciones filtradas por probabilidad descendente
+        self.resultados = sorted(predicciones_filtradas, key=lambda i: predicciones[0][i], reverse=True)
+        
+        if len(self.resultados) > 0:  
+            print(self.resultados)
 
     # Verifica si un número coincide con los resultados predichos y actualiza los contadores.
     def verificar_numero(self, numero):
@@ -123,42 +133,42 @@ class Predictor:
         es_vecino_lejano = False
         self.contador.incrementar_ingresados(numero)
 
-        if self.contador.ingresados > 10:
-            self.contador.incrementar_jugados()
+        if self.contador.ingresados > 7:
+            if len(self.resultados) > 0:
+                self.contador.incrementar_jugados()
+                if numero in self.resultados:
+                    self.contador.incrementar_aciertos()
+                    print(f"¡Acierto! El número {numero} coincide con uno de los resultados.")
+                    self.df_nuevo.at[len(self.df_nuevo), "Acierto"] = "acierto"
+                    acierto = True
+                else:
+                    self.contador.actualizar_sin_aciertos()
 
-        if numero in self.resultados:
-            self.contador.incrementar_aciertos()
-            print(f"¡Acierto! El número {numero} coincide con uno de los resultados.")
-            self.df_nuevo.at[len(self.df_nuevo), "Acierto"] = "acierto"
-            acierto = True
-        else:
-            self.contador.actualizar_sin_aciertos()
+                for vecino in self.resultados:
+                    if numero in vecinosCercanos[vecino]:
+                        self.contador.incrementar_aciertos_vecinos_cercanos()
+                        es_vecino_cercano = True
+                        print(f"¡Vecino! El número {numero} es vecino cercano de {vecino}.")
 
-        for vecino in self.resultados:
-            if numero in vecinosCercanos[vecino]:
-                self.contador.incrementar_aciertos_vecinos_cercanos()
-                es_vecino_cercano = True
-                print(f"¡Vecino! El número {numero} es vecino cercano de {vecino}.")
+                    if numero in vecinosLejanos[vecino]:
+                        self.contador.incrementar_aciertos_vecinos_lejanos()
+                        es_vecino_lejano = True
+                        print(f"¡Vecino! El número {numero} es vecino lejano de {vecino}.")
 
-            if numero in vecinosLejanos[vecino]:
-                self.contador.incrementar_aciertos_vecinos_lejanos()
-                es_vecino_lejano = True
-                print(f"¡Vecino! El número {numero} es vecino lejano de {vecino}.")
+                if es_vecino_cercano:
+                    self.df_nuevo.at[len(self.df_nuevo), "Vecino"] = "VC"
+                else:
+                    self.contador.actualizar_sin_vecinos_cercanos()
 
-        if es_vecino_cercano:
-            self.df_nuevo.at[len(self.df_nuevo), "Vecino"] = "VC"
-        else:
-            self.contador.actualizar_sin_vecinos_cercanos()
+                if es_vecino_lejano:
+                    self.df_nuevo.at[len(self.df_nuevo), "Vecino lejano"] = "VL"
+                else:
+                    self.contador.actualizar_sin_vecinos_lejanos()
 
-        if es_vecino_lejano:
-            self.df_nuevo.at[len(self.df_nuevo), "Vecino lejano"] = "VL"
-        else:
-            self.contador.actualizar_sin_vecinos_lejanos()
-
-        if acierto or es_vecino_cercano or es_vecino_lejano:
-            self.contador.reiniciar_sin_salir_nada()
-        else:
-            self.contador.actualizar_sin_salir_nada()
+                if acierto or es_vecino_cercano or es_vecino_lejano:
+                    self.contador.reiniciar_sin_salir_nada()
+                else:
+                    self.contador.actualizar_sin_salir_nada()
 
     # Actualiza el DataFrame con el número ingresado y los resultados de las predicciones.
     def actualizar_dataframe(self, numero_ingresado):
@@ -258,12 +268,9 @@ def main():
     predictor = Predictor("datos.xlsx")
 
     simulacion = Simulador()
-    all_arrays = [
-        simulacion.numeros_aleatorios7,
-        simulacion.numeros_aleatorios8
-    ]
+    
     while True:
-        for current_array in all_arrays:  # Recorrer cada lista de las 3 listas
+        for current_array in simulacion.arrays:  # Recorrer cada lista de las 3 listas
             for numero in current_array:  # Recorrer cada número en la lista actual
                 opcion = str(numero)
                 if opcion.lower() == "salir":
@@ -278,6 +285,8 @@ def main():
 
                 try:
                     numero = int(opcion)
+                    if  len(predictor.resultados) > 0:
+                        print (numero )
                     if numero < 0 or numero > 36:
                         print(
                             "El número debe estar entre 0 y 36. Inténtalo nuevamente."
