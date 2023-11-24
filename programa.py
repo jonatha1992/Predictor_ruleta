@@ -15,7 +15,6 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping
 
 
-
 class Predictor:
     # Inicializa el objeto de la clase con un nombre de archivo y crea el modelo.
     def __init__(self, filename):
