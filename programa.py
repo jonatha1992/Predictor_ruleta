@@ -43,13 +43,16 @@ class Predictor:
         
 
         # Ruta relativa a la carpeta "modelo" en el mismo directorio que tu archivo de código
-        modelo_path = 'Modelo/mi_modelo'
+        # modelo_path = 'Modelo/mi_modelo'
 
-        if os.path.exists(modelo_path): # Verifica si ya hay un modelo guardado
-            self.model = load_model(modelo_path) # Carga el modelo guardado si existe
-        else:
-            self.model = self._crear_modelo()
-            self.guardar_modelo() # Guarda el modelo después de entrenarlo
+        # if os.path.exists(modelo_path): # Verifica si ya hay un modelo guardado
+        #     self.model = load_model(modelo_path) # Carga el modelo guardado si existe
+        # else:
+        #     self.model = self._crear_modelo()
+        #     self.guardar_modelo() # Guarda el modelo después de entrenarlo
+
+        self.model = self._crear_modelo()
+        self.guardar_modelo() # Guarda el modelo después de entrenarlo
 
         self.df_nuevo = self.df.copy()
 
