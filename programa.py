@@ -186,7 +186,7 @@ class Predictor:
     # Guarda el DataFrame en un archivo de Excel.
     def guardar_excel(self):
         self.generar_reporte()
-        self.df_nuevo.to_excel("Datos.xlsx", sheet_name="Salidos", index=False)
+        self.df_nuevo.to_excel(self.filename, sheet_name="Salidos", index=False)
 
     # Muestra los resultados y las estadísticas.
     def mostrar_resultados(self):
@@ -257,7 +257,13 @@ class Predictor:
 
 # Función principal que ejecuta el programa.
 def main():
-    predictor = Predictor("datos.xlsx")
+    excel_datos = input("\nIngresa el excel de datos: ")
+    
+    if not os.path.exists(excel_datos):
+        print("El archivo Excel no existe. No se puede instanciar el Predictor.")
+        return
+    
+    predictor = Predictor(excel_datos)
     numerosingresado= []
     while True:
         opcion = input(
