@@ -19,6 +19,7 @@ class Predictor:
     # Inicializa el objeto de la clase con un nombre de archivo y crea el modelo.
     def __init__(self, filename):
         self.filename = filename
+        self.nombreModelo = "Model_"+ os.path.splitext(filename)[0]
         self.df = pd.read_excel(filename, sheet_name="Salidos")
 
         self.contador = Contador()
@@ -209,7 +210,7 @@ class Predictor:
             print("Último número borrado")
 
     def guardar_modelo(self):
-        modelo_path = "Modelo/mi_modelo"  # Ruta relativa a la carpeta "modelo"
+        modelo_path = "Modelo/" +self.nombreModelo # Ruta relativa a la carpeta "modelo"
         self.model.save(modelo_path)  # Guarda el modelo en la ubicación especificada
 
     def generar_reporte(self):
@@ -259,41 +260,41 @@ class Predictor:
 def main():
     while True:
         excel_datos = input("\nIngresa el excel de datos: ")
-        
+        excel_datos += ".xlsx"
         if not os.path.exists(excel_datos):
             print("El archivo Excel no existe. No se puede instanciar el Predictor.")
-            return
-        predictor = Predictor(excel_datos)
-        numerosingresado= []
+        else:
+            predictor = Predictor(excel_datos)
+            numerosingresado= []
         
-        while True:
-            opcion = input(
-                "\nIngresa un nuevo número o 'salir' para terminar el programa: "
-            )
-            if opcion.lower() == "salir":
-                print(numerosingresado)
-                predictor.guardar_excel()
-                os.system("start excel Reportes.xlsx")
-                break
+            while True:
+                opcion = input(
+                    "\nIngresa un nuevo número o 'salir' para terminar el programa: "
+                )
+                if opcion.lower() == "salir":
+                    print(numerosingresado)
+                    predictor.guardar_excel()
+                    os.system("start excel Reportes.xlsx")
+                    break
 
-            if opcion.lower() == "-":
-                predictor.borrar()
-                continue
-            try:
-                numero = int(opcion)
-                numerosingresado.append(numero)
-                
-                if numero < 0 or numero > 36:
-                    print("El número debe estar entre 0 y 36. Inténtalo nuevamente.")
+                if opcion.lower() == "-":
+                    predictor.borrar()
                     continue
-                
-                predictor.verificar_numero(numero)
-                predictor.predecir()
-                predictor.actualizar_dataframe(numero)
-                predictor.mostrar_resultados()
+                try:
+                    numero = int(opcion)
+                    numerosingresado.append(numero)
+                    
+                    if numero < 0 or numero > 36:
+                        print("El número debe estar entre 0 y 36. Inténtalo nuevamente.")
+                        continue
+                    
+                    predictor.verificar_numero(numero)
+                    predictor.predecir()
+                    predictor.actualizar_dataframe(numero)
+                    predictor.mostrar_resultados()
 
-            except ValueError:
-                print("Valor ingresado no válido. Inténtalo nuevamente.")
+                except ValueError:
+                    print("Valor ingresado no válido. Inténtalo nuevamente.")
 
 # Si el script se ejecuta como programa principal, llama a la función main().
 if __name__ == "__main__":
