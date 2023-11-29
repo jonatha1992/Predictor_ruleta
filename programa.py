@@ -44,16 +44,16 @@ class Predictor:
         
 
         # Ruta relativa a la carpeta "modelo" en el mismo directorio que tu archivo de código
-        # modelo_path = 'Modelo/mi_modelo'
+        modelo_path = 'Models/'+self.nombreModelo
 
-        # if os.path.exists(modelo_path): # Verifica si ya hay un modelo guardado
-        #     self.model = load_model(modelo_path) # Carga el modelo guardado si existe
-        # else:
-        #     self.model = self._crear_modelo()
-        #     self.guardar_modelo() # Guarda el modelo después de entrenarlo
+        if os.path.exists(modelo_path): # Verifica si ya hay un modelo guardado
+            self.model = load_model(modelo_path) # Carga el modelo guardado si existe
+        else:
+            self.model = self._crear_modelo()
+            self.guardar_modelo() # Guarda el modelo después de entrenarlo
 
-        self.model = self._crear_modelo()
-        self.guardar_modelo() # Guarda el modelo después de entrenarlo
+        # self.model = self._crear_modelo()
+        # self.guardar_modelo() # Guarda el modelo después de entrenarlo
 
         self.df_nuevo = self.df.copy()
 
@@ -210,7 +210,7 @@ class Predictor:
             print("Último número borrado")
 
     def guardar_modelo(self):
-        modelo_path = "Modelo/" +self.nombreModelo # Ruta relativa a la carpeta "modelo"
+        modelo_path = "Models/" +self.nombreModelo # Ruta relativa a la carpeta "modelo"
         self.model.save(modelo_path)  # Guarda el modelo en la ubicación especificada
 
     def generar_reporte(self):
