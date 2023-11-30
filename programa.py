@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 import os
+import logging
 from Entity.Contador import Contador 
 from Entity.Numeros_Simulacion import  Simulador
 from datetime import datetime
@@ -13,8 +14,6 @@ from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping
-
-
 class Predictor:
     # Inicializa el objeto de la clase con un nombre de archivo y crea el modelo.
     def __init__(self, filename):
@@ -27,8 +26,11 @@ class Predictor:
 
 
         self.resultados = []
+        self.numerospredecidos = []
+        self.contador_numeros_predecidos_listad = 0
+        self.contador_sin_salir = 0
         
-
+        
         # Parametros
         self.numerosAnteriores = 7
         self.numeros_a_predecir = 10
@@ -129,8 +131,29 @@ class Predictor:
         
         # Ordenar las predicciones filtradas por probabilidad descendente
         self.resultados = sorted(predicciones_filtradas, key=lambda i: predicciones[0][i], reverse=True)
+        
+        for resultado in self.resultados:
+            if resultado not in self.numerospredecidos:
+                self.numerospredecidos.append(resultado)
+                
+        self.numerospredecidos= sorted(self.numerospredecidos, reverse=True)
+        
        
-
+    def verificar_predecidos(self, numero):
+        if numero in self.numerospredecidos :
+            self.numerospredecidos.remove(numero)
+            self.contador_numeros_predecidos_listad += 1
+            self.contador_sin_salir = 0
+        else:
+            for vecino in self.numerospredecidos:
+                if numero in vecinosCercanos[vecino]:
+                    self.contador_numeros_predecidos_listad += 1
+                    self.contador_sin_salir = 0
+                    self.numerospredecidos.remove(vecino)
+                    break
+            else:
+                self.contador_sin_salir +=1 
+                
     # Verifica si un número coincide con los resultados predichos y actualiza los contadores.
     def verificar_numero(self, numero):
         acierto= False
@@ -198,6 +221,10 @@ class Predictor:
         print(f"Aciertos Resultados: {self.contador.aciertos}")
         print(f"Aciertos de vecinos Cercanos: {self.contador.acierto_vecinos_cercanos}")
         print(f"Aciertos de vecinos Lejanos: {self.contador.acierto_vecinos_lejanos}\n")
+        
+        print(f"Listado de numeros  a predecir: {self.numerospredecidos}" )
+        print(f"Contador: {self.contador_numeros_predecidos_listad}" )
+        print(f"Sin salir: {self.contador_sin_salir}" )
         
         if len(self.resultados) > 0:  
             print(f"\nLas posibles predicciones para el próximo número son: {self.resultados}\n")
@@ -289,12 +316,13 @@ def main():
                         continue
                     
                     predictor.verificar_numero(numero)
+                    predictor.verificar_predecidos(numero)
                     predictor.predecir()
                     predictor.actualizar_dataframe(numero)
                     predictor.mostrar_resultados()
 
                 except ValueError:
-                    print("Valor ingresado no válido. Inténtalo nuevamente.")
+                    print("Ocurrio un error  no válido. Inténtalo nuevamente.")
 
 # Si el script se ejecuta como programa principal, llama a la función main().
 if __name__ == "__main__":
