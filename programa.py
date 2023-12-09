@@ -2,11 +2,10 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 import os
-import logging
 from Entity.Contador import Contador
 from Entity.Numeros_Simulacion import Simulador
 from datetime import datetime
-from Vecinos import vecinosCercanos, vecinosLejanos
+from Entity.Vecinos import vecinosCercanos, vecinosLejanos
 from tensorflow.keras.layers import LSTM, Dense, Dropout, GRU
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.preprocessing.sequence import pad_sequences

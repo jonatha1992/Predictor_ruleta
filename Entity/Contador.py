@@ -7,12 +7,15 @@ class Contador:
         self.acierto_vecinos_cercanos = 0
         self.sin_vecinos_cercanos = 0
         self.acierto_vecinos_lejanos = 0
+        self.acierto_vecinos_lejanos_lejano = 0
         self.sin_vecinos_lejanos = 0
+        self.sin_vecinos_lejanos_lejano = 0
         self.ingresados = 0
         self.jugados = 0
         self.max_sin_acierto = 0
         self.max_sin_vecinos_cercanos = 0
         self.max_sin_vecinos_lejanos = 0
+        self.max_sin_vecinos_lejanos_lejanos = 0
         self.aciertos_totales = 0
         self.Sin_salir_nada = 0
         self.Maximo_Sin_salir_nada = 0
@@ -44,6 +47,11 @@ class Contador:
         self.acierto_vecinos_lejanos += 1
         self.sin_vecinos_lejanos = 0
 
+    def incrementar_aciertos_vecinos_lejanos_lejano(self):
+        self.acierto_vecinos_lejanos_lejano += 1
+        self.sin_vecinos_lejanos_lejanos = 0
+
+
     def actualizar_sin_aciertos(self):
         self.sin_aciertos += 1
         if self.sin_aciertos > self.max_sin_acierto:
@@ -58,7 +66,13 @@ class Contador:
         self.sin_vecinos_lejanos += 1
         if self.sin_vecinos_lejanos > self.max_sin_vecinos_lejanos:
             self.max_sin_vecinos_lejanos = self.sin_vecinos_lejanos
-    
+
+    def actualizar_sin_vecinos_lejanos_lejanos(self):
+        self.sin_vecinos_lejanos_lejanos += 1
+        if self.sin_vecinos_lejanos_lejanos > self.max_sin_vecinos_lejanos_lejanos:
+            self.max_sin_vecinos_lejanos = self.sin_vecinos_lejanos_lejanos
+
+
     def actualizar_sin_salir_nada(self):
         self.Sin_salir_nada += 1
         if self.Sin_salir_nada > self.Maximo_Sin_salir_nada:
