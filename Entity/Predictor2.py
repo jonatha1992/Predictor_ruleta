@@ -5,7 +5,7 @@ import os
 from Entity.Contador2 import Contador2
 from Entity.Numeros_Simulacion import Simulador
 from datetime import datetime
-from Entity.Vecinos import vecinosCercanos, vecinosLejanos, vecinosLejanoLejano
+from Entity.Vecinos import vecino1lugar, vecino2lugar, vecinos3lugar, Vecino4lugar
 from tensorflow.keras.layers import LSTM, Dense, Dropout, GRU
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.preprocessing.sequence import pad_sequences
@@ -152,9 +152,11 @@ class Predictor2:
 
     def verificar_predecidos(self, numero):
         acierto = False
-        es_vecino_cercano = False
-        es_vecino_lejano = False
-        es_vecino_lejano_lejano = False
+        es_vecino1lugar = False
+        es_vecino2lugar = False
+        es_vecino3lugar = False
+        es_vecino4lugar=False
+
         self.numeros_a_eliminar = []
         self.no_salidos = []
         self.contador.incrementar_ingresados(numero)
@@ -163,24 +165,29 @@ class Predictor2:
             if numero in self.resultados:
                 self.numeros_a_eliminar.append(numero)
                 self.contador.incrementar_predecidos()
-                self.df_nuevo.at[len(self.df_nuevo), "Acierto"] = "acierto"
+                self.df_nuevo.at[len(self.df_nuevo), "Acierto"] = "P"
                 acierto = True
 
             for vecino in self.resultados:
-                if numero in vecinosCercanos[vecino]:
+                if numero in vecino1lugar[vecino]:
                     self.numeros_a_eliminar.append(vecino)
-                    self.contador.incrementar_aciertos_vecinos_cercanos()
-                    es_vecino_cercano = True
+                    self.contador.incrementar_aciertos_vecinos_1lugar()
+                    es_vecino1lugar = True
 
-                if numero in vecinosLejanos[vecino]:
+                if numero in vecino2lugar[vecino]:
                     self.numeros_a_eliminar.append(vecino)
-                    self.contador.incrementar_aciertos_vecinos_lejanos()
-                    es_vecino_lejano = True
+                    self.contador.incrementar_aciertos_vecinos_2lugar()
+                    es_vecino2lugar = True
 
-                if numero in vecinosLejanoLejano[vecino]:
+                if numero in vecinos3lugar[vecino]:
                     self.numeros_a_eliminar.append(vecino)
-                    self.contador.incrementar_aciertos_vecinos_lejanos()
-                    es_vecino_lejano_lejano = True
+                    self.contador.incrementar_aciertos_vecinos_3lugar()
+                    es_vecino3lugar = True
+                
+                if numero in Vecino4lugar[vecino]:
+                    self.numeros_a_eliminar.append(vecino)
+                    self.contador.incrementar_aciertos_vecinos_4lugar()
+                    es_vecino4lugar = True
 
             for key in self.resultados:
                 self.resultados[key] += 1
@@ -191,27 +198,31 @@ class Predictor2:
                     self.contador.incrementar_supero_limite()
                     
 
-            if es_vecino_cercano:
-                self.df_nuevo.at[len(self.df_nuevo), "VC"] = "VC"
+            if es_vecino1lugar:
+                self.df_nuevo.at[len(self.df_nuevo), "V1L"] = "V1L"
 
-            if es_vecino_lejano:
-                self.df_nuevo.at[len(self.df_nuevo), "VL"] = "VL"
+            if es_vecino2lugar:
+                self.df_nuevo.at[len(self.df_nuevo), "V2L"] = "V2L"
 
-            if es_vecino_lejano_lejano:
-                self.df_nuevo.at[len(self.df_nuevo), "VLL"] = "VLL"
-
+            if es_vecino3lugar:
+                self.df_nuevo.at[len(self.df_nuevo), "V3L"] = "V3L"
+            
+            if es_vecino4lugar:
+                self.df_nuevo.at[len(self.df_nuevo), "V4L"] = "V4L"
             if (
                 acierto
-                or es_vecino_cercano
-                or es_vecino_lejano
-                or es_vecino_lejano_lejano
+                or es_vecino1lugar
+                or es_vecino2lugar
+                or es_vecino3lugar
+                or es_vecino4lugar
             ):
                 self.contador.incrementar_aciertos()
 
     # Actualiza el DataFrame con el número ingresado y los resultados de las predicciones.
     def actualizar_dataframe(self, numero_ingresado):
         self.df_nuevo.loc[len(self.df_nuevo) + 1, "Salidos"] = (numero_ingresado,)
-        self.df_nuevo.at[len(self.df_nuevo), "Resultados"] = str(self.resultados)
+        # self.df_nuevo.at[len(self.df_nuevo), "Resultados"] = str(self.resultados)
+        self.df_nuevo.loc[len(self.df_nuevo), "Resultados"] = str(self.resultados)
         self.df_nuevo.loc[len(self.df_nuevo), "Orden"] = self.contador.ingresados
         self.df_nuevo.loc[len(self.df_nuevo), "Acertados"] = str(self.numeros_a_eliminar)
         self.df_nuevo.loc[len(self.df_nuevo), "No salidos"] = str(self.no_salidos)
@@ -228,17 +239,18 @@ class Predictor2:
         print(f"Aciertos Totales: {self.contador.aciertos_totales}")
         print(f"Sin salir: {self.contador.Sin_salir_nada}\n")
         print(f"Aciertos Predecidos: {self.contador.acierto_predecidos}")
-        print(f"Aciertos de vecinos Cercanos: {self.contador.acierto_vecinos_cercanos}")
-        print(f"Aciertos de vecinos Lejanos: {self.contador.acierto_vecinos_lejanos}")
-        print(f"Aciertos de vecinos Lejanos Lejanos: {self.contador.acierto_vecinos_lejanos_lejano}\n")
+        print(f"Aciertos de vecinos Cercanos: {self.contador.acierto_vecinos_1lugar}")
+        print(f"Aciertos de vecinos Lejanos: {self.contador.acierto_vecinos_2lugar}")
+        print(f"Aciertos de vecinos Lejanos Lejanos: {self.contador.acierto_vecinos_3lugar}\n")
 
         for num in self.numeros_a_eliminar:
             del self.resultados[num]
-            print(f"El Número {num} eliminado de la lista de resultados.")
+            print(f"El Número {num} fue acertado de la lista de predecidos.")
         
         for num in self.no_salidos:
-            del self.resultados[num]
-            print(f"El Número {num} eliminado por que supero el limite.")
+            if num in self.no_salidos:
+                del self.resultados[num]
+                print(f"El Número {num} eliminado por que supero el limite.")
             
             
         if len(self.resultados) > 0:
@@ -262,9 +274,9 @@ class Predictor2:
             "Numeros jugados": self.contador.jugados,
             "Aciertos Totales": self.contador.aciertos_totales,
             "Aciertos de Predecidos": self.contador.acierto_predecidos,
-            "Aciertos de VC": self.contador.acierto_vecinos_cercanos,
-            "Aciertos de VL": self.contador.acierto_vecinos_lejanos,
-            "Aciertos de VLL": self.contador.acierto_vecinos_lejanos_lejano,
+            "Aciertos de VC": self.contador.acierto_vecinos_1lugar,
+            "Aciertos de VL": self.contador.acierto_vecinos_2lugar,
+            "Aciertos de VLL": self.contador.acierto_vecinos_3lugar,
             "l2": self.l2_lambda,
             "dropout rate": self.dropout_rate,
             "learning rate": self.learning_rate,

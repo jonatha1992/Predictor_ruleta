@@ -5,7 +5,7 @@ import os
 from Entity.Contador import Contador
 from Entity.Numeros_Simulacion import Simulador
 from datetime import datetime
-from Entity.Vecinos import vecinosCercanos, vecinosLejanos
+from Entity.Vecinos import vecino1lugar, vecino2lugar
 from tensorflow.keras.layers import LSTM, Dense, Dropout, GRU
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.preprocessing.sequence import pad_sequences
@@ -155,11 +155,11 @@ class Predictor:
             self.contador_sin_salir = 0
 
         for vecino in self.numerospredecidos:
-            if numero in vecinosCercanos[vecino]:
+            if numero in vecino1lugar[vecino]:
                 numeros_a_eliminar.append(vecino)
                 self.contador_sin_salir = 0
 
-            if numero in vecinosLejanos[vecino]:
+            if numero in vecino2lugar[vecino]:
                 numeros_a_eliminar.append(vecino)
                 self.contador_sin_salir = 0
 
@@ -192,14 +192,14 @@ class Predictor:
                     self.contador.actualizar_sin_aciertos()
 
                 for vecino in self.resultados:
-                    if numero in vecinosCercanos[vecino]:
+                    if numero in vecino1lugar[vecino]:
                         self.contador.incrementar_aciertos_vecinos_cercanos()
                         es_vecino_cercano = True
                         print(
                             f"¡Vecino! El número {numero} es vecino cercano de {vecino}."
                         )
 
-                    if numero in vecinosLejanos[vecino]:
+                    if numero in vecino2lugar[vecino]:
                         self.contador.incrementar_aciertos_vecinos_lejanos()
                         es_vecino_lejano = True
                         print(

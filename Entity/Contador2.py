@@ -3,9 +3,10 @@ class Contador2:
     def __init__(self):
         self.numeros = []
         self.acierto_predecidos = 0
-        self.acierto_vecinos_cercanos = 0
-        self.acierto_vecinos_lejanos = 0
-        self.acierto_vecinos_lejanos_lejano = 0
+        self.acierto_vecinos_1lugar = 0
+        self.acierto_vecinos_2lugar = 0
+        self.acierto_vecinos_3lugar = 0
+        self.acierto_vecinos_4lugar = 0
         self.ingresados = 0
         self.jugados = 0
         self.aciertos_totales = 0
@@ -31,15 +32,16 @@ class Contador2:
 
     def incrementar_predecidos(self):
         self.acierto_predecidos += 1
-    def incrementar_aciertos_vecinos_cercanos(self):
-        self.acierto_vecinos_cercanos += 1
+    def incrementar_aciertos_vecinos_1lugar(self):
+        self.acierto_vecinos_1lugar += 1
 
-    def incrementar_aciertos_vecinos_lejanos(self):
-        self.acierto_vecinos_lejanos += 1
+    def incrementar_aciertos_vecinos_2lugar(self):
+        self.acierto_vecinos_2lugar += 1
 
-    def incrementar_aciertos_vecinos_lejanos_lejano(self):
-        self.acierto_vecinos_lejanos_lejano += 1
-
+    def incrementar_aciertos_vecinos_3lugar(self):
+        self.acierto_vecinos_3lugar += 1
+    def incrementar_aciertos_vecinos_4lugar(self):
+        self.acierto_vecinos_4lugar += 1
     def incrementar_supero_limite(self):
         self.Sin_salir_nada += 1
 
