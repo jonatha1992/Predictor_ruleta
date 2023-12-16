@@ -29,7 +29,7 @@ class Predictor2:
         self.contador.numeros = self.df["Salidos"].values.tolist()
 
         self.resultados = dict()
-        self.numeros_a_eliminar = list()
+        self.numeros_predecidos = list()
         self.no_salidos = list()
 
         # Parametros
@@ -91,7 +91,7 @@ class Predictor2:
             loss="categorical_crossentropy", optimizer=optimizer, metrics=["accuracy"]
         )
 
-        early_stopping = EarlyStopping(monitor="val_loss", patience=10)
+        early_stopping = EarlyStopping(monitor="loss", patience=20)
         # Entrenar modelo
         model.fit(
             secuencias,
@@ -157,47 +157,57 @@ class Predictor2:
         es_vecino3lugar = False
         es_vecino4lugar=False
 
-        self.numeros_a_eliminar = []
+        self.numeros_predecidos = []
         self.no_salidos = []
         self.contador.incrementar_ingresados(numero)
 
         if len(self.resultados) > 0:
             if numero in self.resultados:
-                self.numeros_a_eliminar.append(numero)
+                self.numeros_predecidos.append(numero)
                 self.contador.incrementar_predecidos()
                 self.df_nuevo.at[len(self.df_nuevo), "Acierto"] = "P"
                 acierto = True
 
             for vecino in self.resultados:
                 if numero in vecino1lugar[vecino]:
-                    self.numeros_a_eliminar.append(vecino)
-                    self.contador.incrementar_aciertos_vecinos_1lugar()
-                    es_vecino1lugar = True
+                    if vecino not in  self.numeros_predecidos:
+                        self.numeros_predecidos.append(vecino)
+                        self.contador.incrementar_aciertos_vecinos_1lugar()
+                        es_vecino1lugar = True
 
                 if numero in vecino2lugar[vecino]:
-                    self.numeros_a_eliminar.append(vecino)
-                    self.contador.incrementar_aciertos_vecinos_2lugar()
-                    es_vecino2lugar = True
+                    if vecino not in  self.numeros_predecidos:
+                        self.numeros_predecidos.append(vecino)
+                        self.contador.incrementar_aciertos_vecinos_2lugar()
+                        es_vecino2lugar = True
 
                 if numero in vecinos3lugar[vecino]:
-                    self.numeros_a_eliminar.append(vecino)
-                    self.contador.incrementar_aciertos_vecinos_3lugar()
-                    es_vecino3lugar = True
+                    if vecino not in  self.numeros_predecidos:
+                        self.numeros_predecidos.append(vecino)
+                        self.contador.incrementar_aciertos_vecinos_3lugar()
+                        es_vecino3lugar = True
                 
                 if numero in Vecino4lugar[vecino]:
-                    self.numeros_a_eliminar.append(vecino)
-                    self.contador.incrementar_aciertos_vecinos_4lugar()
-                    es_vecino4lugar = True
+                    if vecino not in  self.numeros_predecidos:
+                        self.numeros_predecidos.append(vecino)
+                        self.contador.incrementar_aciertos_vecinos_4lugar()
+                        es_vecino4lugar = True
 
             for key in self.resultados:
                 self.resultados[key] += 1
 
-            for num in self.resultados:
+            for num in list(self.resultados.keys()):   
                 if self.resultados[num] >= 7:
+                    del self.resultados[num]
                     self.no_salidos.append(num)
                     self.contador.incrementar_supero_limite()
                     
-
+            for x in list(self.numeros_predecidos):   
+                del self.resultados[x]
+                  
+            
+            
+            
             if es_vecino1lugar:
                 self.df_nuevo.at[len(self.df_nuevo), "V1L"] = "V1L"
 
@@ -224,7 +234,7 @@ class Predictor2:
         # self.df_nuevo.at[len(self.df_nuevo), "Resultados"] = str(self.resultados)
         self.df_nuevo.loc[len(self.df_nuevo), "Resultados"] = str(self.resultados)
         self.df_nuevo.loc[len(self.df_nuevo), "Orden"] = self.contador.ingresados
-        self.df_nuevo.loc[len(self.df_nuevo), "Acertados"] = str(self.numeros_a_eliminar)
+        self.df_nuevo.loc[len(self.df_nuevo), "Acertados"] = str(self.numeros_predecidos)
         self.df_nuevo.loc[len(self.df_nuevo), "No salidos"] = str(self.no_salidos)
 
     # Guarda el DataFrame en un archivo de Excel.
@@ -239,18 +249,17 @@ class Predictor2:
         print(f"Aciertos Totales: {self.contador.aciertos_totales}")
         print(f"Sin salir: {self.contador.Sin_salir_nada}\n")
         print(f"Aciertos Predecidos: {self.contador.acierto_predecidos}")
-        print(f"Aciertos de vecinos Cercanos: {self.contador.acierto_vecinos_1lugar}")
-        print(f"Aciertos de vecinos Lejanos: {self.contador.acierto_vecinos_2lugar}")
-        print(f"Aciertos de vecinos Lejanos Lejanos: {self.contador.acierto_vecinos_3lugar}\n")
+        print(f"Aciertos v1 lugar : {self.contador.acierto_vecinos_1lugar}")
+        print(f"Aciertos v2 lugar: {self.contador.acierto_vecinos_2lugar}")
+        print(f"Aciertos v3 lugar: {self.contador.acierto_vecinos_3lugar}")
+        print(f"Aciertos v4 lugar : {self.contador.acierto_vecinos_4lugar}\n")
 
-        for num in self.numeros_a_eliminar:
-            del self.resultados[num]
-            print(f"El Número {num} fue acertado de la lista de predecidos.")
+        for e in self.numeros_predecidos:
+            print(f"El Número {e} fue acertado de la lista de predecidos.")
         
-        for num in self.no_salidos:
-            if num in self.no_salidos:
-                del self.resultados[num]
-                print(f"El Número {num} eliminado por que supero el limite.")
+        
+        for x in self.no_salidos:
+            print(f"El Número {x} eliminado por que supero el limite.")
             
             
         if len(self.resultados) > 0:
