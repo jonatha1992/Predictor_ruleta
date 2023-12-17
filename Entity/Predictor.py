@@ -5,13 +5,13 @@ import os
 from Entity.Contador import Contador
 from Entity.Numeros_Simulacion import Simulador
 from datetime import datetime
-from Entity.Vecinos import vecino1lugar, vecino2lugar
+from Entity.Vecinos import vecino1lugar, vecino2lugar, vecinos3lugar, Vecino4lugar
 from tensorflow.keras.layers import LSTM, Dense, Dropout, GRU
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.regularizers import l2
-from tensorflow.keras.optimizers import Adam, Nadam , Adadelta
+from tensorflow.keras.optimizers import Adam, Nadam, Adadelta
 from tensorflow.keras.callbacks import EarlyStopping
 
 
@@ -20,7 +20,7 @@ class Predictor:
     def __init__(self, filename):
         self.filename = filename
         self.foldername = os.path.dirname(filename)
-        self.filebasename = os.path.splitext (os.path.basename(filename))[0]
+        self.filebasename = os.path.splitext(os.path.basename(filename))[0]
 
         self.nombreModelo = "Model_" + self.filebasename
         self.df = pd.read_excel(filename, sheet_name="Salidos")
@@ -28,10 +28,9 @@ class Predictor:
         self.contador = Contador()
         self.contador.numeros = self.df["Salidos"].values.tolist()
 
-        self.resultados = []
-        self.numerospredecidos = []
-        self.contador_numeros_predecidos_listad = 0
-        self.contador_sin_salir = 0
+        self.resultados = dict()
+        self.numeros_predecidos = list()
+        self.no_salidos = list()
 
         # Parametros
         self.numerosAnteriores = 7
@@ -49,14 +48,11 @@ class Predictor:
         # Ruta relativa a la carpeta "modelo" en el mismo directorio que tu archivo de código
         modelo_path = "./Models/" + self.nombreModelo
 
-        if os.path.exists(modelo_path): # Verifica si ya hay un modelo guardado
-            self.model = load_model(modelo_path) # Carga el modelo guardado si existe
+        if os.path.exists(modelo_path):  # Verifica si ya hay un modelo guardado
+            self.model = load_model(modelo_path)  # Carga el modelo guardado si existe
         else:
             self.model = self._crear_modelo()
-            self.guardar_modelo() # Guarda el modelo después de entrenarlo
-
-        # self.model = self._crear_modelo()
-        # self.guardar_modelo()  # Guarda el modelo después de entrenarlo
+            self.guardar_modelo()  # Guarda el modelo después de entrenarlo
 
         self.df_nuevo = self.df.copy()
 
@@ -87,17 +83,23 @@ class Predictor:
         model.add(Dense(37, activation="softmax"))
 
         # Compilar modelo
-        optimizer = Adam(learning_rate=self.learning_rate)  # Usar una tasa de aprendizaje personalizada
-     
-        # optimizer = Nadam(lr=self.learning_rate)
-        # optimizer = Adadelta()
-     
-        model.compile(loss="categorical_crossentropy", optimizer=optimizer, metrics=["accuracy"])
+        optimizer = Adam(
+            learning_rate=self.learning_rate
+        )  # Usar una tasa de aprendizaje personalizada
 
-        # early_stopping = EarlyStopping(monitor='val_loss', patience=10)
+        model.compile(
+            loss="categorical_crossentropy", optimizer=optimizer, metrics=["accuracy"]
+        )
+
+        early_stopping = EarlyStopping(monitor="loss", patience=20)
         # Entrenar modelo
         model.fit(
-            secuencias, siguientes_numeros, epochs=self.epoc, batch_size=self.batchSize
+            secuencias,
+            siguientes_numeros,
+            epochs=self.epoc,
+            batch_size=self.batchSize,
+            validation_split=0.2,
+            callbacks=[early_stopping],
         )
 
         return model
@@ -115,10 +117,14 @@ class Predictor:
         return secuencias, siguientes_numeros
 
     # Predice los próximos números.
+
+    def guardar_modelo(self):
+        modelo_path = (
+            "Models/" + self.nombreModelo
+        )  # Ruta relativa a la carpeta "modelo"
+        self.model.save(modelo_path)  # Guarda el modelo en la ubicación especificada
+
     def predecir(self):
-        # secuencia_entrada = np.array(self.contador.numeros[-7:]).reshape(1, 7, 1)
-        # predicciones = self.model.predict(secuencia_entrada, verbose=0)
-        # self.resultados = sorted(predicciones[0].argsort()[-self.numeros_a_predecir:][::-1])
         if self.contador.ingresados > 7:
             secuencia_entrada = np.array(self.contador.numeros[-7:]).reshape(1, 7, 1)
             predicciones = self.model.predict(secuencia_entrada, verbose=0)
@@ -131,103 +137,105 @@ class Predictor:
             ]
 
             # Ordenar las predicciones filtradas por probabilidad descendente
-            self.resultados = sorted(
+            predecidos = sorted(
                 predicciones_filtradas, key=lambda i: predicciones[0][i], reverse=True
             )
 
-            for resultado in self.resultados:
-                if resultado not in self.numerospredecidos:
-                    self.numerospredecidos.append(resultado)
+            for num in predecidos:
+                if num not in self.resultados:
+                    self.resultados[num] = 0
+                    self.contador.incrementar_jugados()
 
-            self.numerospredecidos = sorted(self.numerospredecidos, reverse=False)
-
-    def guardar_modelo(self):
-        modelo_path = (
-            "Models/" + self.nombreModelo
-        )  # Ruta relativa a la carpeta "modelo"
-        self.model.save(modelo_path)  # Guarda el modelo en la ubicación especificada
+            self.resultados = {
+                k: self.resultados[k] for k in sorted(self.resultados.keys())
+            }
 
     def verificar_predecidos(self, numero):
-        numeros_a_eliminar = []
-        if numero in self.numerospredecidos:
-            numeros_a_eliminar.append(numero)
-            self.contador_numeros_predecidos_listad += 1
-            self.contador_sin_salir = 0
-
-        for vecino in self.numerospredecidos:
-            if numero in vecino1lugar[vecino]:
-                numeros_a_eliminar.append(vecino)
-                self.contador_sin_salir = 0
-
-            if numero in vecino2lugar[vecino]:
-                numeros_a_eliminar.append(vecino)
-                self.contador_sin_salir = 0
-
-        for num in numeros_a_eliminar:
-            self.numerospredecidos.remove(num)
-
-        if not numeros_a_eliminar:
-            self.contador_sin_salir += 1
-        else:
-            self.contador_numeros_predecidos_listad += 1
-
-    # Verifica si un número coincide con los resultados predichos y actualiza los contadores.
-    def verificar_numero(self, numero):
         acierto = False
-        es_vecino_cercano = False
-        es_vecino_lejano = False
+        es_vecino1lugar = False
+        es_vecino2lugar = False
+        es_vecino3lugar = False
+        es_vecino4lugar=False
+
+        self.numeros_predecidos = []
+        self.no_salidos = []
         self.contador.incrementar_ingresados(numero)
 
-        if self.contador.ingresados > 7:
-            if len(self.resultados) > 0:
-                self.contador.incrementar_jugados()
-                if numero in self.resultados:
-                    self.contador.incrementar_aciertos()
-                    print(
-                        f"¡Acierto! El número {numero} coincide con uno de los resultados."
-                    )
-                    self.df_nuevo.at[len(self.df_nuevo), "Acierto"] = "acierto"
-                    acierto = True
-                else:
-                    self.contador.actualizar_sin_aciertos()
+        if len(self.resultados) > 0:
+            if numero in self.resultados:
+                self.numeros_predecidos.append(numero)
+                self.contador.incrementar_predecidos()
+                self.df_nuevo.at[len(self.df_nuevo), "Acierto"] = "P"
+                acierto = True
 
-                for vecino in self.resultados:
-                    if numero in vecino1lugar[vecino]:
-                        self.contador.incrementar_aciertos_vecinos_cercanos()
-                        es_vecino_cercano = True
-                        print(
-                            f"¡Vecino! El número {numero} es vecino cercano de {vecino}."
-                        )
+            for vecino in self.resultados:
+                if numero in vecino1lugar[vecino]:
+                    if vecino not in  self.numeros_predecidos:
+                        self.numeros_predecidos.append(vecino)
+                        self.contador.incrementar_aciertos_vecinos_1lugar()
+                        es_vecino1lugar = True
 
-                    if numero in vecino2lugar[vecino]:
-                        self.contador.incrementar_aciertos_vecinos_lejanos()
-                        es_vecino_lejano = True
-                        print(
-                            f"¡Vecino! El número {numero} es vecino lejano de {vecino}."
-                        )
+                if numero in vecino2lugar[vecino]:
+                    if vecino not in  self.numeros_predecidos:
+                        self.numeros_predecidos.append(vecino)
+                        self.contador.incrementar_aciertos_vecinos_2lugar()
+                        es_vecino2lugar = True
 
-                if es_vecino_cercano:
-                    self.df_nuevo.at[len(self.df_nuevo), "Vecino"] = "VC"
-                else:
-                    self.contador.actualizar_sin_vecinos_cercanos()
+                if numero in vecinos3lugar[vecino]:
+                    if vecino not in  self.numeros_predecidos:
+                        self.numeros_predecidos.append(vecino)
+                        self.contador.incrementar_aciertos_vecinos_3lugar()
+                        es_vecino3lugar = True
+                
+                if numero in Vecino4lugar[vecino]:
+                    if vecino not in  self.numeros_predecidos:
+                        self.numeros_predecidos.append(vecino)
+                        self.contador.incrementar_aciertos_vecinos_4lugar()
+                        es_vecino4lugar = True
 
-                if es_vecino_lejano:
-                    self.df_nuevo.at[len(self.df_nuevo), "Vecino lejano"] = "VL"
-                else:
-                    self.contador.actualizar_sin_vecinos_lejanos()
+            for key in self.resultados:
+                self.resultados[key] += 1
 
-                if acierto or es_vecino_cercano or es_vecino_lejano:
-                    self.contador.reiniciar_sin_salir_nada()
-                else:
-                    self.contador.actualizar_sin_salir_nada()
+            for num in list(self.resultados.keys()):   
+                if self.resultados[num] >= 7:
+                    del self.resultados[num]
+                    self.no_salidos.append(num)
+                    self.contador.incrementar_supero_limite()
+                    
+            for x in list(self.numeros_predecidos):   
+                del self.resultados[x]
+                  
+            
+            
+            
+            if es_vecino1lugar:
+                self.df_nuevo.at[len(self.df_nuevo), "V1L"] = "V1L"
+
+            if es_vecino2lugar:
+                self.df_nuevo.at[len(self.df_nuevo), "V2L"] = "V2L"
+
+            if es_vecino3lugar:
+                self.df_nuevo.at[len(self.df_nuevo), "V3L"] = "V3L"
+            
+            if es_vecino4lugar:
+                self.df_nuevo.at[len(self.df_nuevo), "V4L"] = "V4L"
+            if (
+                acierto
+                or es_vecino1lugar
+                or es_vecino2lugar
+                or es_vecino3lugar
+                or es_vecino4lugar
+            ):
+                self.contador.incrementar_aciertos()
 
     # Actualiza el DataFrame con el número ingresado y los resultados de las predicciones.
     def actualizar_dataframe(self, numero_ingresado):
         self.df_nuevo.loc[len(self.df_nuevo) + 1, "Salidos"] = (numero_ingresado,)
-        self.df_nuevo.at[len(self.df_nuevo), "Resultados"] = str(self.resultados)
-        self.df_nuevo.loc[
-            len(self.df_nuevo), "Numero jugado"
-        ] = self.contador.ingresados
+        # self.df_nuevo.at[len(self.df_nuevo), "Resultados"] = str(self.resultados)
+        self.df_nuevo.loc[len(self.df_nuevo), "Resultados"] = str(self.resultados)
+        self.df_nuevo.loc[len(self.df_nuevo), "Orden"] = self.contador.ingresados
+        self.df_nuevo.loc[len(self.df_nuevo), "Acertados"] = str(self.numeros_predecidos)
+        self.df_nuevo.loc[len(self.df_nuevo), "No salidos"] = str(self.no_salidos)
 
     # Guarda el DataFrame en un archivo de Excel.
     def guardar_excel(self):
@@ -240,18 +248,22 @@ class Predictor:
         print(f"Numeros Jugados: {self.contador.jugados}")
         print(f"Aciertos Totales: {self.contador.aciertos_totales}")
         print(f"Sin salir: {self.contador.Sin_salir_nada}\n")
-        print(f"Aciertos Resultados: {self.contador.aciertos}")
-        print(f"Aciertos de vecinos Cercanos: {self.contador.acierto_vecinos_cercanos}")
-        print(f"Aciertos de vecinos Lejanos: {self.contador.acierto_vecinos_lejanos}\n")
+        print(f"Aciertos Predecidos: {self.contador.acierto_predecidos}")
+        print(f"Aciertos v1 lugar : {self.contador.acierto_vecinos_1lugar}")
+        print(f"Aciertos v2 lugar: {self.contador.acierto_vecinos_2lugar}")
+        print(f"Aciertos v3 lugar: {self.contador.acierto_vecinos_3lugar}")
+        print(f"Aciertos v4 lugar : {self.contador.acierto_vecinos_4lugar}\n")
 
-        print(f"Listado de numeros  a predecir: {self.numerospredecidos}")
-        print(f"Contador: {self.contador_numeros_predecidos_listad}")
-        print(f"Sin salir: {self.contador_sin_salir}")
-
+        for e in self.numeros_predecidos:
+            print(f"El Número {e} fue acertado de la lista de predecidos.")
+        
+        
+        for x in self.no_salidos:
+            print(f"El Número {x} eliminado por que supero el limite.")
+            
+            
         if len(self.resultados) > 0:
-            print(
-                f"\nLas posibles predicciones para el próximo número son: {self.resultados}\n"
-            )
+            print(f"\nLas posibles predicciones para el próximo número son: {self.resultados}\n")
 
     # Borra el último número ingresado y actualiza el contador.
     def borrar(self):
@@ -270,13 +282,10 @@ class Predictor:
             "Juego fecha y hora": fecha_hora_actual,
             "Numeros jugados": self.contador.jugados,
             "Aciertos Totales": self.contador.aciertos_totales,
-            "Maximo sin salir totales": self.contador.Maximo_Sin_salir_nada,
-            "Aciertos de resultados": self.contador.aciertos,
-            "Aciertos de vecinos cercanos": self.contador.acierto_vecinos_cercanos,
-            "Aciertos de vecinos lejanos": self.contador.acierto_vecinos_lejanos,
-            "Maximo valor que tardo sin salir acierto": self.contador.max_sin_acierto,
-            "Maximo valor que tardo sin salir vecinos cercanos": self.contador.max_sin_vecinos_cercanos,
-            "Maximo valor que tardo sin salir vecinos lejanos": self.contador.max_sin_vecinos_lejanos,
+            "Aciertos de Predecidos": self.contador.acierto_predecidos,
+            "Aciertos de VC": self.contador.acierto_vecinos_1lugar,
+            "Aciertos de VL": self.contador.acierto_vecinos_2lugar,
+            "Aciertos de VLL": self.contador.acierto_vecinos_3lugar,
             "l2": self.l2_lambda,
             "dropout rate": self.dropout_rate,
             "learning rate": self.learning_rate,
@@ -304,4 +313,3 @@ class Predictor:
         # Guardar el DataFrame en el archivo de Excel
         df_final.to_excel(archivo_excel, index=False)
         return datos
-
