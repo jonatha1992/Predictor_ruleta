@@ -196,14 +196,15 @@ class Predictor:
             for key in self.resultados:
                 self.resultados[key] += 1
 
+            for x in list(self.numeros_predecidos):   
+                del self.resultados[x]
+                
             for num in list(self.resultados.keys()):   
                 if self.resultados[num] >= 7:
                     del self.resultados[num]
                     self.no_salidos.append(num)
                     self.contador.incrementar_supero_limite()
                     
-            for x in list(self.numeros_predecidos):   
-                del self.resultados[x]
                   
             
             
@@ -269,10 +270,16 @@ class Predictor:
     def borrar(self):
         if self.contador.numeros:
             self.contador.borrar_ultimo_numero()
+            ultimonun = self.contador.numeros[-1]
             self.df_nuevo = self.df_nuevo[
                 :-1
             ]  # Eliminar la última fila del DataFrame nuevo
-            print("Último número borrado")
+            
+            if len(self.resultados) > 0:
+                for key in self.resultados:
+                    self.resultados[key] -= 1
+        
+        print(f"Último número borrado {ultimonun}")
 
     def generar_reporte(self):
         fecha_hora_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
