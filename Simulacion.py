@@ -137,7 +137,7 @@ class Predictor:
             if len(self.resultados) > 0:
                 self.contador.incrementar_jugados()
                 if numero in self.resultados:
-                    self.contador.incrementar_aciertos()
+                    self.contador.incrementar_aciertos_totales()
                     print(f"¡Acierto! El número {numero} coincide con uno de los resultados.")
                     self.df_nuevo.at[len(self.df_nuevo), "Acierto"] = "acierto"
                     acierto = True

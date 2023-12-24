@@ -21,14 +21,16 @@ class Contador:
         self.ingresados -= 1
         self.numeros.pop()
         
-        if self.ingresados > 7 :  
+        if self.ingresados > 7 or self.jugados > 0:  
             self.jugados -= 1
         
     def incrementar_jugados(self):
         self.jugados += 1
 
-    def incrementar_aciertos(self):
+    def incrementar_aciertos_totales(self):
         self.aciertos_totales += 1
+    def incrementar_aciertos_totales(self, numero):
+        self.aciertos_totales += numero
 
     def incrementar_predecidos(self):
         self.acierto_predecidos += 1

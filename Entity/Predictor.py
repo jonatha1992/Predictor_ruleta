@@ -155,7 +155,7 @@ class Predictor:
         es_vecino1lugar = False
         es_vecino2lugar = False
         es_vecino3lugar = False
-        es_vecino4lugar=False
+        es_vecino4lugar = False
 
         self.numeros_predecidos = []
         self.no_salidos = []
@@ -170,25 +170,25 @@ class Predictor:
 
             for vecino in self.resultados:
                 if numero in vecino1lugar[vecino]:
-                    if vecino not in  self.numeros_predecidos:
+                    if vecino not in self.numeros_predecidos:
                         self.numeros_predecidos.append(vecino)
                         self.contador.incrementar_aciertos_vecinos_1lugar()
                         es_vecino1lugar = True
 
                 if numero in vecino2lugar[vecino]:
-                    if vecino not in  self.numeros_predecidos:
+                    if vecino not in self.numeros_predecidos:
                         self.numeros_predecidos.append(vecino)
                         self.contador.incrementar_aciertos_vecinos_2lugar()
                         es_vecino2lugar = True
 
                 if numero in vecinos3lugar[vecino]:
-                    if vecino not in  self.numeros_predecidos:
+                    if vecino not in self.numeros_predecidos:
                         self.numeros_predecidos.append(vecino)
                         self.contador.incrementar_aciertos_vecinos_3lugar()
                         es_vecino3lugar = True
-                
+
                 if numero in Vecino4lugar[vecino]:
-                    if vecino not in  self.numeros_predecidos:
+                    if vecino not in self.numeros_predecidos:
                         self.numeros_predecidos.append(vecino)
                         self.contador.incrementar_aciertos_vecinos_4lugar()
                         es_vecino4lugar = True
@@ -196,19 +196,15 @@ class Predictor:
             for key in self.resultados:
                 self.resultados[key] += 1
 
-            for x in list(self.numeros_predecidos):   
+            for x in list(self.numeros_predecidos):
                 del self.resultados[x]
-                
-            for num in list(self.resultados.keys()):   
+
+            for num in list(self.resultados.keys()):
                 if self.resultados[num] >= 7:
                     del self.resultados[num]
                     self.no_salidos.append(num)
                     self.contador.incrementar_supero_limite()
-                    
-                  
-            
-            
-            
+
             if es_vecino1lugar:
                 self.df_nuevo.at[len(self.df_nuevo), "V1L"] = "V1L"
 
@@ -217,17 +213,11 @@ class Predictor:
 
             if es_vecino3lugar:
                 self.df_nuevo.at[len(self.df_nuevo), "V3L"] = "V3L"
-            
+
             if es_vecino4lugar:
                 self.df_nuevo.at[len(self.df_nuevo), "V4L"] = "V4L"
-            if (
-                acierto
-                or es_vecino1lugar
-                or es_vecino2lugar
-                or es_vecino3lugar
-                or es_vecino4lugar
-            ):
-                self.contador.incrementar_aciertos()
+            if len(self.numeros_predecidos) > 0:
+                self.contador.incrementar_aciertos_totales(len(self.numeros_predecidos))
 
     # Actualiza el DataFrame con el número ingresado y los resultados de las predicciones.
     def actualizar_dataframe(self, numero_ingresado):
@@ -235,7 +225,9 @@ class Predictor:
         # self.df_nuevo.at[len(self.df_nuevo), "Resultados"] = str(self.resultados)
         self.df_nuevo.loc[len(self.df_nuevo), "Resultados"] = str(self.resultados)
         self.df_nuevo.loc[len(self.df_nuevo), "Orden"] = self.contador.ingresados
-        self.df_nuevo.loc[len(self.df_nuevo), "Acertados"] = str(self.numeros_predecidos)
+        self.df_nuevo.loc[len(self.df_nuevo), "Acertados"] = str(
+            self.numeros_predecidos
+        )
         self.df_nuevo.loc[len(self.df_nuevo), "No salidos"] = str(self.no_salidos)
 
     # Guarda el DataFrame en un archivo de Excel.
@@ -257,14 +249,14 @@ class Predictor:
 
         for e in self.numeros_predecidos:
             print(f"El Número {e} fue acertado de la lista de predecidos.")
-        
-        
+
         for x in self.no_salidos:
             print(f"El Número {x} eliminado por que supero el limite.")
-            
-            
+
         if len(self.resultados) > 0:
-            print(f"\nLas posibles predicciones para el próximo número son: {self.resultados}\n")
+            print(
+                f"\nLas posibles predicciones para el próximo número son: {self.resultados}\n"
+            )
 
     # Borra el último número ingresado y actualiza el contador.
     def borrar(self):
@@ -274,11 +266,11 @@ class Predictor:
             self.df_nuevo = self.df_nuevo[
                 :-1
             ]  # Eliminar la última fila del DataFrame nuevo
-            
+
             if len(self.resultados) > 0:
                 for key in self.resultados:
                     self.resultados[key] -= 1
-        
+
         print(f"Último número borrado {ultimonun}")
 
     def generar_reporte(self):
@@ -290,9 +282,10 @@ class Predictor:
             "Numeros jugados": self.contador.jugados,
             "Aciertos Totales": self.contador.aciertos_totales,
             "Aciertos de Predecidos": self.contador.acierto_predecidos,
-            "Aciertos de VC": self.contador.acierto_vecinos_1lugar,
-            "Aciertos de VL": self.contador.acierto_vecinos_2lugar,
-            "Aciertos de VLL": self.contador.acierto_vecinos_3lugar,
+            "V1L": self.contador.acierto_vecinos_1lugar,
+            "V2L": self.contador.acierto_vecinos_2lugar,
+            "V3L": self.contador.acierto_vecinos_3lugar,
+            "V4L": self.contador.acierto_vecinos_4lugar,
             "l2": self.l2_lambda,
             "dropout rate": self.dropout_rate,
             "learning rate": self.learning_rate,
@@ -301,6 +294,7 @@ class Predictor:
             "Nros a Predecir": self.numeros_a_predecir,
             "Nros Anteriores": self.numerosAnteriores,
             "Efectividad": self.contador.sacarEfectividad(),
+            "Ruleta": self.filename,
         }
 
         # Convertir el diccionario en un DataFrame de Pandas
