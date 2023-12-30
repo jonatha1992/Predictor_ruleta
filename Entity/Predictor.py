@@ -42,8 +42,9 @@ class Predictor:
         self.dropout_rate = 0.01
         self.learning_rate = 0.003  # Tasa de aprendizaje inicial
         self.epoc = 100
-        self.batchSize = 512
-        self.umbral_probilidad = 0.7
+        self.batchSize = 200
+        self.umbral_probilidad = 0.90
+        self.limite = 10
 
         # Ruta relativa a la carpeta "modelo" en el mismo directorio que tu archivo de código
         modelo_path = "./Models/" + self.nombreModelo
@@ -125,7 +126,7 @@ class Predictor:
         self.model.save(modelo_path)  # Guarda el modelo en la ubicación especificada
 
     def predecir(self):
-        if self.contador.ingresados > 7:
+        if self.contador.ingresados > self.numerosAnteriores:
             secuencia_entrada = np.array(self.contador.numeros[-7:]).reshape(1, 7, 1)
             predicciones = self.model.predict(secuencia_entrada, verbose=0)
 
@@ -140,10 +141,11 @@ class Predictor:
             predecidos = sorted(
                 predicciones_filtradas, key=lambda i: predicciones[0][i], reverse=True
             )
+            print(f"Predicciones: {predecidos}\n")
 
             for num in predecidos:
                 if num not in self.resultados:
-                    self.resultados[num] = 0
+                    self.resultados[num] = 0    
                     self.contador.incrementar_jugados()
 
             self.resultados = {
@@ -200,7 +202,7 @@ class Predictor:
                 del self.resultados[x]
 
             for num in list(self.resultados.keys()):
-                if self.resultados[num] >= 7:
+                if self.resultados[num] >= self.limite:
                     del self.resultados[num]
                     self.no_salidos.append(num)
                     self.contador.incrementar_supero_limite()
@@ -216,6 +218,7 @@ class Predictor:
 
             if es_vecino4lugar:
                 self.df_nuevo.at[len(self.df_nuevo), "V4L"] = "V4L"
+
             if len(self.numeros_predecidos) > 0:
                 self.contador.incrementar_aciertos_totales(len(self.numeros_predecidos))
 
@@ -250,8 +253,8 @@ class Predictor:
         for e in self.numeros_predecidos:
             print(f"El Número {e} fue acertado de la lista de predecidos.")
 
-        for x in self.no_salidos:
-            print(f"El Número {x} eliminado por que supero el limite.")
+        # for x in self.no_salidos:
+        #     print(f"El Número {x} eliminado por que supero el limite.")
 
         if len(self.resultados) > 0:
             print(
