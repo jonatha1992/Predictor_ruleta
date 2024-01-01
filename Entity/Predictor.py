@@ -6,7 +6,7 @@ from Entity.Contador import Contador
 from Entity.Numeros_Simulacion import Simulador
 from datetime import datetime
 from Entity.Vecinos import vecino1lugar, vecino2lugar, vecinos3lugar, Vecino4lugar
-from tensorflow.keras.layers import LSTM, Dense, Dropout, GRU
+from tensorflow.keras.layers import LSTM, Dense, Dropout, GRU, Bidirectional
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.utils import to_categorical
@@ -29,7 +29,7 @@ class Predictor:
         self.contador.numeros = self.df["Salidos"].values.tolist()
 
         self.resultados = dict()
-        self.numeros_predecidos = list()
+        self.numeros_predecidos = dict()
         self.no_salidos = list()
 
         # Parametros
@@ -42,8 +42,8 @@ class Predictor:
         self.dropout_rate = 0.01
         self.learning_rate = 0.003  # Tasa de aprendizaje inicial
         self.epoc = 100
-        self.batchSize = 200
-        self.umbral_probilidad = 0.90
+        self.batchSize = 500
+        self.umbral_probilidad = 0.7
         self.limite = 10
 
         # Ruta relativa a la carpeta "modelo" en el mismo directorio que tu archivo de código
@@ -68,16 +68,22 @@ class Predictor:
                 input_shape=(7, 1),
                 return_sequences=True,
                 kernel_regularizer=l2(self.l2_lambda),
+                dropout=self.dropout_rate,
             )
         )
         # Reducir el número de unidades en la última capa LSTM
         model.add(Dropout(self.dropout_rate))
         model.add(
-            LSTM(self.gru, return_sequences=True, kernel_regularizer=l2(self.l2_lambda))
+            LSTM(
+                self.gru,
+                return_sequences=True,
+                kernel_regularizer=l2(self.l2_lambda),
+                dropout=self.dropout_rate,
+            )
         )
         # Cambiar a capa GRU
         model.add(Dropout(self.dropout_rate))
-        model.add(LSTM(self.lsmt2, kernel_regularizer=l2(self.l2_lambda)))
+        model.add(LSTM(self.lsmt2, kernel_regularizer=l2(self.l2_lambda), dropout=self.dropout_rate))
 
         # Reducir el número de unidades en la última capa LSTM
         model.add(Dropout(self.dropout_rate))
@@ -141,15 +147,22 @@ class Predictor:
             predecidos = sorted(
                 predicciones_filtradas, key=lambda i: predicciones[0][i], reverse=True
             )
-            print(f"Predicciones: {predecidos}\n")
 
             for num in predecidos:
                 if num not in self.resultados:
-                    self.resultados[num] = 0    
-                    self.contador.incrementar_jugados()
+                    self.resultados[num] = 0
+                else:
+                    self.resultados[num] = 0
+
+                    # self.contador.incrementar_jugados()
+            if len(predecidos) > 0:
+                self.contador.incrementar_jugados()
 
             self.resultados = {
-                k: self.resultados[k] for k in sorted(self.resultados.keys())
+                k: v
+                for k, v in sorted(
+                    self.resultados.items(), key=lambda item: item[1], reverse=False
+                )
             }
 
     def verificar_predecidos(self, numero):
@@ -159,13 +172,14 @@ class Predictor:
         es_vecino3lugar = False
         es_vecino4lugar = False
 
-        self.numeros_predecidos = []
+        self.numeros_predecidos = dict()
         self.no_salidos = []
         self.contador.incrementar_ingresados(numero)
 
         if len(self.resultados) > 0:
             if numero in self.resultados:
-                self.numeros_predecidos.append(numero)
+                # self.numeros_predecidos.append(numero)
+                self.numeros_predecidos[numero] = self.resultados[numero]
                 self.contador.incrementar_predecidos()
                 self.df_nuevo.at[len(self.df_nuevo), "Acierto"] = "P"
                 acierto = True
@@ -173,25 +187,27 @@ class Predictor:
             for vecino in self.resultados:
                 if numero in vecino1lugar[vecino]:
                     if vecino not in self.numeros_predecidos:
-                        self.numeros_predecidos.append(vecino)
+                        # self.numeros_predecidos.append(vecino)
+                        self.numeros_predecidos[vecino] = self.resultados[vecino]
                         self.contador.incrementar_aciertos_vecinos_1lugar()
                         es_vecino1lugar = True
 
                 if numero in vecino2lugar[vecino]:
                     if vecino not in self.numeros_predecidos:
-                        self.numeros_predecidos.append(vecino)
+                        # self.numeros_predecidos.append(vecino)
+                        self.numeros_predecidos[vecino] = self.resultados[vecino]
                         self.contador.incrementar_aciertos_vecinos_2lugar()
                         es_vecino2lugar = True
 
                 if numero in vecinos3lugar[vecino]:
                     if vecino not in self.numeros_predecidos:
-                        self.numeros_predecidos.append(vecino)
+                        # self.numeros_predecidos.append(vecino)
                         self.contador.incrementar_aciertos_vecinos_3lugar()
                         es_vecino3lugar = True
 
                 if numero in Vecino4lugar[vecino]:
                     if vecino not in self.numeros_predecidos:
-                        self.numeros_predecidos.append(vecino)
+                        # self.numeros_predecidos.append(vecino)
                         self.contador.incrementar_aciertos_vecinos_4lugar()
                         es_vecino4lugar = True
 
@@ -253,13 +269,16 @@ class Predictor:
         for e in self.numeros_predecidos:
             print(f"El Número {e} fue acertado de la lista de predecidos.")
 
-        # for x in self.no_salidos:
-        #     print(f"El Número {x} eliminado por que supero el limite.")
+        for x in self.no_salidos:
+            print(f"El Número {x} eliminado por que supero el limite.")
 
         if len(self.resultados) > 0:
-            print(
-                f"\nLas posibles predicciones para el próximo número son: {self.resultados}\n"
-            )
+            # print(
+            #     f"\nLas posibles predicciones para el próximo número son: {self.resultados}\n"
+            # )
+            print("\nLas posibles predicciones para el próximo número son:")
+            for key in self.resultados:
+                print(f"numero {key} = {self.resultados[key]}")
 
     # Borra el último número ingresado y actualiza el contador.
     def borrar(self):
