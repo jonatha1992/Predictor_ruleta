@@ -26,7 +26,8 @@ class Predictor:
         self.df = pd.read_excel(filename, sheet_name="Salidos")
 
         self.contador = Contador()
-        self.contador.numeros = self.df["Salidos"].values.tolist()
+        # self.contador.numeros = self.df["Salidos"].values.tolist()
+        self.contador.numeros = self.df["Salidos"].head(3500).tolist()
 
         self.resultados = dict()
         self.numeros_predecidos = dict()
@@ -44,7 +45,7 @@ class Predictor:
         self.epoc = 100
         self.batchSize = 500
         self.umbral_probilidad = 0.7
-        self.limite = 10
+        self.limite = 8
 
         # Ruta relativa a la carpeta "modelo" en el mismo directorio que tu archivo de código
         modelo_path = "./Models/" + self.nombreModelo
@@ -83,7 +84,13 @@ class Predictor:
         )
         # Cambiar a capa GRU
         model.add(Dropout(self.dropout_rate))
-        model.add(LSTM(self.lsmt2, kernel_regularizer=l2(self.l2_lambda), dropout=self.dropout_rate))
+        model.add(
+            LSTM(
+                self.lsmt2,
+                kernel_regularizer=l2(self.l2_lambda),
+                dropout=self.dropout_rate,
+            )
+        )
 
         # Reducir el número de unidades en la última capa LSTM
         model.add(Dropout(self.dropout_rate))
@@ -95,7 +102,7 @@ class Predictor:
         )  # Usar una tasa de aprendizaje personalizada
 
         model.compile(
-            loss="categorical_crossentropy", optimizer=optimizer, metrics=["accuracy"]
+            loss="categorical_crossentropy", optimizer=optimizer, metrics=['accuracy']
         )
 
         early_stopping = EarlyStopping(monitor="loss", patience=20)
@@ -256,15 +263,15 @@ class Predictor:
 
     # Muestra los resultados y las estadísticas.
     def mostrar_resultados(self):
-        print(self.df_nuevo.tail(7))
+        print(self.df_nuevo.tail(5))
         print(f"Numeros Jugados: {self.contador.jugados}")
         print(f"Aciertos Totales: {self.contador.aciertos_totales}")
         print(f"Sin salir: {self.contador.Sin_salir_nada}\n")
         print(f"Aciertos Predecidos: {self.contador.acierto_predecidos}")
         print(f"Aciertos v1 lugar : {self.contador.acierto_vecinos_1lugar}")
         print(f"Aciertos v2 lugar: {self.contador.acierto_vecinos_2lugar}")
-        print(f"Aciertos v3 lugar: {self.contador.acierto_vecinos_3lugar}")
-        print(f"Aciertos v4 lugar : {self.contador.acierto_vecinos_4lugar}\n")
+        # print(f"Aciertos v3 lugar: {self.contador.acierto_vecinos_3lugar}")
+        # print(f"Aciertos v4 lugar : {self.contador.acierto_vecinos_4lugar}\n")
 
         for e in self.numeros_predecidos:
             print(f"El Número {e} fue acertado de la lista de predecidos.")
@@ -278,7 +285,7 @@ class Predictor:
             # )
             print("\nLas posibles predicciones para el próximo número son:")
             for key in self.resultados:
-                print(f"numero {key} = {self.resultados[key]}")
+                print(f"jugar {key} = {self.resultados[key]}")
 
     # Borra el último número ingresado y actualiza el contador.
     def borrar(self):
