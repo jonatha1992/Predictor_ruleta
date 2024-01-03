@@ -27,9 +27,10 @@ class HyperparameterTuner:
 
         # Define l2_lambda, dropout_rate, and learning_rate once
         l2_lambda_value = hp.Choice("l2_lambda", values=[0.001, 0.002, 0.003])
-        dropout_rate_value = hp.Choice("dropout_rate", values=[0.02, 0.01])
+        dropout_rate_value = hp.Choice("dropout_rate", values=[0.1, 0.2, 0.3])
         learning_rate_value = hp.Choice("learning_rate", values=[0.001, 0.003])
 
+        
         # LSTM layer
         model.add(
             LSTM(
@@ -67,6 +68,8 @@ class HyperparameterTuner:
             loss="categorical_crossentropy",
             metrics=["accuracy"],
         )
+
+        
         return model
 
     def _crear_secuencias(self):
@@ -97,8 +100,8 @@ class HyperparameterTuner:
             return
 
         early_stopping_loss = EarlyStopping(monitor="loss", patience=30)
-        early_stopping_accuracy = EarlyStopping(monitor="accuracy", patience=30)
-        early_stopping_val_accuracy = EarlyStopping(monitor="val_accuracy", patience=30)
+        early_stopping_accuracy = EarlyStopping(monitor="accuracy", patience=40)
+        early_stopping_val_accuracy = EarlyStopping(monitor="val_accuracy", patience=40)
 
         epoch = 100
         for batch in [500, 600]:
@@ -157,5 +160,5 @@ class HyperparameterTuner:
 
 
 if __name__ == "__main__":
-    tuner = HyperparameterTuner("./Data/bombay1.xlsx")
+    tuner = HyperparameterTuner("./Data/datos.xlsx")
     tuner.tune_hyperparameters()
