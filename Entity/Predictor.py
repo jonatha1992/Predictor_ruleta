@@ -6,7 +6,7 @@ from Entity.Contador import Contador
 from Entity.Numeros_Simulacion import Simulador
 from datetime import datetime
 from Entity.Vecinos import vecino1lugar, vecino2lugar, vecinos3lugar, Vecino4lugar
-from tensorflow.keras.layers import LSTM, Dense, Dropout, GRU, Bidirectional
+from tensorflow.keras.layers import LSTM, Dense, Dropout, GRU, Bidirectional , BatchNormalization
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.utils import to_categorical
@@ -72,6 +72,7 @@ class Predictor:
                 dropout=self.dropout_rate,
             )
         )
+        model.add(BatchNormalization())
         # Reducir el número de unidades en la última capa LSTM
         model.add(Dropout(self.dropout_rate))
         model.add(
@@ -83,6 +84,7 @@ class Predictor:
             )
         )
         # Cambiar a capa GRU
+        model.add(BatchNormalization())
         model.add(Dropout(self.dropout_rate))
         model.add(
             LSTM(
@@ -91,7 +93,7 @@ class Predictor:
                 dropout=self.dropout_rate,
             )
         )
-
+        model.add(BatchNormalization())
         # Reducir el número de unidades en la última capa LSTM
         model.add(Dropout(self.dropout_rate))
         model.add(Dense(37, activation="softmax"))

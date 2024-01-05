@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import os
 from keras.models import Sequential
-from keras.layers import LSTM, GRU, Dropout, Dense
+from keras.layers import LSTM, GRU, Dropout, Dense, BatchNormalization
 from keras_tuner import BayesianOptimization
 from keras.utils import to_categorical
 from keras.optimizers import Adam
@@ -26,38 +26,47 @@ class HyperparameterTuner:
         model = Sequential()
 
         # Define l2_lambda, dropout_rate, and learning_rate once
+        # lstm_units = hp.Choice("lstm", values=[352, 256])
+        # gru_units = hp.Choice("gru", values=[256, 128])
+        # lstm2_units = hp.Choice("lstm2", values=[96, 64])
         l2_lambda_value = hp.Choice("l2_lambda", values=[0.001, 0.002, 0.003])
-        dropout_rate_value = hp.Choice("dropout_rate", values=[0.02, 0.01])
-        learning_rate_value = hp.Choice("learning_rate", values=[0.001, 0.003])
+        dropout_rate_value = hp.Choice("dropout_rate", values=[0.02, 0.01, 0.03, 0.04 ,0.05])
+        learning_rate_value = hp.Choice(
+            "learning_rate", values=[0.001, 0.002, 0.003, 0.005]
+        )
 
         # LSTM layer
         model.add(
             LSTM(
-                units=hp.Int("lstm_units", min_value=256, max_value=512, step=32),
+                units=256,
                 input_shape=(7, 1),
                 return_sequences=True,
                 kernel_regularizer=L2(l2_lambda_value),
             )
         )
+        model.add(BatchNormalization())
         model.add(Dropout(rate=dropout_rate_value))
 
         # GRU layer
         model.add(
             GRU(
-                units=hp.Int("gru_units", min_value=128, max_value=256, step=32),
+                units=128,
                 return_sequences=False,
                 kernel_regularizer=L2(l2_lambda_value),
             )
         )
+        model.add(BatchNormalization())
         model.add(Dropout(rate=dropout_rate_value))
         # Dense layers
         model.add(
             Dense(
-                units=hp.Int("lstm2_units", min_value=64, max_value=128, step=32),
+                units=64,
                 activation="relu",
                 kernel_regularizer=L2(l2_lambda_value),
             )
         )
+
+        model.add(BatchNormalization())
         model.add(Dropout(rate=dropout_rate_value))
         model.add(Dense(37, activation="softmax"))
 
@@ -96,9 +105,9 @@ class HyperparameterTuner:
             )
             return
 
-        early_stopping_loss = EarlyStopping(monitor="loss", patience=30)
-        early_stopping_accuracy = EarlyStopping(monitor="accuracy", patience=30)
-        early_stopping_val_accuracy = EarlyStopping(monitor="val_accuracy", patience=30)
+        # early_stopping_loss = EarlyStopping(monitor="loss", patience=30)
+        # early_stopping_accuracy = EarlyStopping(monitor="accuracy", patience=30)
+        early_stopping_val_accuracy = EarlyStopping(monitor="val_accuracy", patience=25)
 
         epoch = 100
         for batch in [500, 600]:
@@ -116,11 +125,11 @@ class HyperparameterTuner:
                 y=self.siguientes_numeros,
                 epochs=epoch,
                 batch_size=batch,
-                verbose=1,
+                verbose=2,
                 validation_split=0.2,
                 callbacks=[
-                    early_stopping_loss,
-                    early_stopping_accuracy,
+                    # early_stopping_loss,
+                    # early_stopping_accuracy,
                     early_stopping_val_accuracy,
                 ],
             )
