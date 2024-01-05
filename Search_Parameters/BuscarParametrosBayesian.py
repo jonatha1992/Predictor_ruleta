@@ -38,7 +38,7 @@ class HyperparameterTuner:
         # LSTM layer
         model.add(
             LSTM(
-                units=256,
+                units=320,
                 input_shape=(7, 1),
                 return_sequences=True,
                 kernel_regularizer=L2(l2_lambda_value),
@@ -50,7 +50,7 @@ class HyperparameterTuner:
         # GRU layer
         model.add(
             GRU(
-                units=128,
+                units=256,
                 return_sequences=False,
                 kernel_regularizer=L2(l2_lambda_value),
             )
@@ -60,7 +60,7 @@ class HyperparameterTuner:
         # Dense layers
         model.add(
             Dense(
-                units=64,
+                units=128,
                 activation="relu",
                 kernel_regularizer=L2(l2_lambda_value),
             )
@@ -128,8 +128,6 @@ class HyperparameterTuner:
                 verbose=2,
                 validation_split=0.2,
                 callbacks=[
-                    # early_stopping_loss,
-                    # early_stopping_accuracy,
                     early_stopping_val_accuracy,
                 ],
             )
@@ -166,5 +164,5 @@ class HyperparameterTuner:
 
 
 if __name__ == "__main__":
-    tuner = HyperparameterTuner("./Data/bombay1.xlsx")
+    tuner = HyperparameterTuner("./Data/Datos.xlsx")
     tuner.tune_hyperparameters()
