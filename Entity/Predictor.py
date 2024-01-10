@@ -6,7 +6,14 @@ from Entity.Contador import Contador
 from Entity.Numeros_Simulacion import Simulador
 from datetime import datetime
 from Entity.Vecinos import vecino1lugar, vecino2lugar, vecinos3lugar, Vecino4lugar
-from tensorflow.keras.layers import LSTM, Dense, Dropout, GRU, Bidirectional , BatchNormalization
+from tensorflow.keras.layers import (
+    LSTM,
+    Dense,
+    Dropout,
+    GRU,
+    Bidirectional,
+    BatchNormalization,
+)
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.utils import to_categorical
@@ -21,31 +28,33 @@ class Predictor:
         self.filename = filename
         self.foldername = os.path.dirname(filename)
         self.filebasename = os.path.splitext(os.path.basename(filename))[0]
-
         self.nombreModelo = "Model_" + self.filebasename
         self.df = pd.read_excel(filename, sheet_name="Salidos")
-
         self.contador = Contador()
         # self.contador.numeros = self.df["Salidos"].values.tolist()
         self.contador.numeros = self.df["Salidos"].head(3500).tolist()
 
-        self.resultados = dict()
+        self.numeros_a_jugar = dict()
         self.numeros_predecidos = dict()
+        self.pretendientes = dict()
         self.no_salidos = list()
 
         # Parametros
-        self.numerosAnteriores = 7
+        self.numerosAnteriores = 5
+        self.lugares_vecinos = 3
         self.numeros_a_predecir = 10
-        self.lsmt = 352
+        self.umbral_probilidad = 0.50
+        self.limite = 3
+
+        # hiperparamtros
+        self.lsmt = 320
         self.gru = 256
         self.lsmt2 = 128
         self.l2_lambda = 0.001
-        self.dropout_rate = 0.01
+        self.dropout_rate = 0.05
         self.learning_rate = 0.003  # Tasa de aprendizaje inicial
         self.epoc = 100
         self.batchSize = 500
-        self.umbral_probilidad = 0.7
-        self.limite = 8
 
         # Ruta relativa a la carpeta "modelo" en el mismo directorio que tu archivo de código
         modelo_path = "./Models/" + self.nombreModelo
@@ -66,21 +75,19 @@ class Predictor:
         model.add(
             LSTM(
                 self.lsmt,  # Incrementar el número de unidades en la primera capa LSTM
-                input_shape=(7, 1),
+                input_shape=(self.numerosAnteriores, 1),
                 return_sequences=True,
                 kernel_regularizer=l2(self.l2_lambda),
-                dropout=self.dropout_rate,
             )
         )
         model.add(BatchNormalization())
         # Reducir el número de unidades en la última capa LSTM
         model.add(Dropout(self.dropout_rate))
         model.add(
-            LSTM(
+            GRU(
                 self.gru,
                 return_sequences=True,
                 kernel_regularizer=l2(self.l2_lambda),
-                dropout=self.dropout_rate,
             )
         )
         # Cambiar a capa GRU
@@ -90,7 +97,6 @@ class Predictor:
             LSTM(
                 self.lsmt2,
                 kernel_regularizer=l2(self.l2_lambda),
-                dropout=self.dropout_rate,
             )
         )
         model.add(BatchNormalization())
@@ -104,7 +110,7 @@ class Predictor:
         )  # Usar una tasa de aprendizaje personalizada
 
         model.compile(
-            loss="categorical_crossentropy", optimizer=optimizer, metrics=['accuracy']
+            loss="categorical_crossentropy", optimizer=optimizer, metrics=["accuracy"]
         )
 
         early_stopping = EarlyStopping(monitor="loss", patience=20)
@@ -115,7 +121,6 @@ class Predictor:
             epochs=self.epoc,
             batch_size=self.batchSize,
             validation_split=0.2,
-            callbacks=[early_stopping],
         )
 
         return model
@@ -125,9 +130,9 @@ class Predictor:
     def _crear_secuencias(self):
         secuencias = []
         siguientes_numeros = []
-        for i in range(len(self.contador.numeros) - 8):
-            secuencias.append(self.contador.numeros[i : i + 7])
-            siguientes_numeros.append(self.contador.numeros[i + 7])
+        for i in range(len(self.contador.numeros) - (self.numerosAnteriores + 1)):
+            secuencias.append(self.contador.numeros[i : i + self.numerosAnteriores])
+            siguientes_numeros.append(self.contador.numeros[i + self.numerosAnteriores])
         secuencias = pad_sequences(np.array(secuencias))
         siguientes_numeros = to_categorical(np.array(siguientes_numeros))
         return secuencias, siguientes_numeros
@@ -142,39 +147,132 @@ class Predictor:
 
     def predecir(self):
         if self.contador.ingresados > self.numerosAnteriores:
-            secuencia_entrada = np.array(self.contador.numeros[-7:]).reshape(1, 7, 1)
+            secuencia_entrada = np.array(
+                self.contador.numeros[-self.numerosAnteriores :]
+            ).reshape(1, self.numerosAnteriores, 1)
             predicciones = self.model.predict(secuencia_entrada, verbose=0)
 
+            # print("Predicciones antes del umbral:")
+            # predicciones_ordenadas = sorted(enumerate(predicciones[0]), key=lambda x: x[1], reverse=True)
+
+            # for i, (indice, probabilidad) in enumerate(predicciones_ordenadas):
+            #     probabilidad_redondeada = round(probabilidad, 4)  # Redondea a 4 decimales (puedes ajustar esto)
+            #     print(f"Número: {indice}, Probabilidad: {probabilidad_redondeada}")
+            
             # Filtrar predicciones basadas en el umbral de probabilidad
             predicciones_filtradas = [
                 i
                 for i, probabilidad in enumerate(predicciones[0])
                 if probabilidad > self.umbral_probilidad
             ]
-
             # Ordenar las predicciones filtradas por probabilidad descendente
             predecidos = sorted(
                 predicciones_filtradas, key=lambda i: predicciones[0][i], reverse=True
             )
 
+            for key in self.pretendientes:
+                self.pretendientes[key] += 1
+
             for num in predecidos:
-                if num not in self.resultados:
-                    self.resultados[num] = 0
-                else:
-                    self.resultados[num] = 0
+                if num in self.numeros_a_jugar:
+                    self.numeros_a_jugar[num] += 1
+                if num in self.pretendientes:
+                    self.numeros_a_jugar[num] = 1
+                    self.contador.incrementar_jugados()
+                if num not in self.pretendientes:
+                    self.pretendientes[num] = 0
 
-                    # self.contador.incrementar_jugados()
-            if len(predecidos) > 0:
-                self.contador.incrementar_jugados()
+            for x in list(self.numeros_a_jugar):
+                if x in self.pretendientes:
+                    del self.pretendientes[x]
 
-            self.resultados = {
+            for num in list(self.pretendientes.keys()):
+                if self.pretendientes[num] >= self.limite:
+                    del self.pretendientes[num]
+
+            self.numeros_a_jugar = {
                 k: v
                 for k, v in sorted(
-                    self.resultados.items(), key=lambda item: item[1], reverse=False
+                    self.numeros_a_jugar.items(), key=lambda item: item[1], reverse=True
                 )
             }
 
-    def verificar_predecidos(self, numero):
+    # def verificar_predecidos(self, numero):
+    #     acierto = False
+    #     es_vecino1lugar = False
+    #     es_vecino2lugar = False
+    #     es_vecino3lugar = False
+    #     es_vecino4lugar = False
+
+    #     self.numeros_predecidos = dict()
+    #     self.no_salidos = []
+    #     self.contador.incrementar_ingresados(numero)
+
+    #     if len(self.resultados) > 0:
+    #         if numero in self.resultados:
+    #             # self.numeros_predecidos.append(numero)
+    #             self.numeros_predecidos[numero] = self.resultados[numero]
+    #             self.contador.incrementar_predecidos()
+    #             self.df_nuevo.at[len(self.df_nuevo), "Acierto"] = "P"
+    #             acierto = True
+
+    #         for vecino in self.resultados:
+    #             if numero in vecino1lugar[vecino]:
+    #                 if vecino not in self.numeros_predecidos:
+    #                     if self.lugares_vecinos >= 1:
+    #                         self.numeros_predecidos[vecino] = self.resultados[vecino]
+    #                         self.contador.incrementar_aciertos_vecinos_1lugar()
+    #                         es_vecino1lugar = True
+
+    #             if numero in vecino2lugar[vecino]:
+    #                 if vecino not in self.numeros_predecidos:
+    #                     if self.lugares_vecinos >= 2:
+    #                         self.numeros_predecidos[vecino] = self.resultados[vecino]
+    #                         self.contador.incrementar_aciertos_vecinos_2lugar()
+    #                         es_vecino2lugar = True
+
+    #             if numero in vecinos3lugar[vecino]:
+    #                 if vecino not in self.numeros_predecidos:
+    #                     if self.lugares_vecinos >= 3:
+    #                         self.numeros_predecidos[vecino] = self.resultados[vecino]
+    #                         self.contador.incrementar_aciertos_vecinos_3lugar()
+    #                         es_vecino3lugar = True
+
+    #             if numero in Vecino4lugar[vecino]:
+    #                 if vecino not in self.numeros_predecidos:
+    #                     if self.lugares_vecinos >= 4:
+    #                         self.numeros_predecidos[vecino] = self.resultados[vecino]
+    #                         self.contador.incrementar_aciertos_vecinos_4lugar()
+    #                         es_vecino4lugar = True
+
+    #         # for key in self.resultados:
+    #         #     self.resultados[key] += 1
+
+    #         for x in list(self.numeros_predecidos):
+    #             del self.resultados[x]
+
+    #         # for num in list(self.resultados.keys()):
+    #         #     if self.resultados[num] >= self.limite:
+    #         #         del self.resultados[num]
+    #         #         self.no_salidos.append(num)
+    #         #         self.contador.incrementar_supero_limite()
+
+    #         if es_vecino1lugar:
+    #             self.df_nuevo.at[len(self.df_nuevo), "V1L"] = "V1L"
+
+    #         if es_vecino2lugar:
+    #             self.df_nuevo.at[len(self.df_nuevo), "V2L"] = "V2L"
+
+    #         if es_vecino3lugar:
+    #             self.df_nuevo.at[len(self.df_nuevo), "V3L"] = "V3L"
+
+    #         if es_vecino4lugar:
+    #             self.df_nuevo.at[len(self.df_nuevo), "V4L"] = "V4L"
+
+    #         if len(self.numeros_predecidos) > 0:
+    #             self.contador.incrementar_aciertos_totales(len(self.numeros_predecidos))
+
+    def verificar_predecidos2(self, numero):
         acierto = False
         es_vecino1lugar = False
         es_vecino2lugar = False
@@ -185,53 +283,57 @@ class Predictor:
         self.no_salidos = []
         self.contador.incrementar_ingresados(numero)
 
-        if len(self.resultados) > 0:
-            if numero in self.resultados:
-                # self.numeros_predecidos.append(numero)
-                self.numeros_predecidos[numero] = self.resultados[numero]
+        if len(self.numeros_a_jugar) > 0:
+            if numero in self.numeros_a_jugar and self.numeros_a_jugar[numero] > 0:
+                self.numeros_predecidos[numero] = self.numeros_a_jugar[numero]
                 self.contador.incrementar_predecidos()
                 self.df_nuevo.at[len(self.df_nuevo), "Acierto"] = "P"
                 acierto = True
 
-            for vecino in self.resultados:
-                if numero in vecino1lugar[vecino]:
+            for vecino in self.numeros_a_jugar:
+                if (
+                    numero in vecino1lugar[vecino]
+                    and self.lugares_vecinos >= 1
+                    and self.numeros_a_jugar[vecino] > 0
+                ):
                     if vecino not in self.numeros_predecidos:
-                        # self.numeros_predecidos.append(vecino)
-                        self.numeros_predecidos[vecino] = self.resultados[vecino]
+                        self.numeros_predecidos[vecino] = self.numeros_a_jugar[vecino]
                         self.contador.incrementar_aciertos_vecinos_1lugar()
                         es_vecino1lugar = True
 
-                if numero in vecino2lugar[vecino]:
+                if (
+                    numero in vecino2lugar[vecino]
+                    and self.lugares_vecinos >= 2
+                    and self.numeros_a_jugar[vecino] > 0
+                ):
                     if vecino not in self.numeros_predecidos:
-                        # self.numeros_predecidos.append(vecino)
-                        self.numeros_predecidos[vecino] = self.resultados[vecino]
+                        self.numeros_predecidos[vecino] = self.numeros_a_jugar[vecino]
                         self.contador.incrementar_aciertos_vecinos_2lugar()
                         es_vecino2lugar = True
 
-                if numero in vecinos3lugar[vecino]:
+                if (
+                    numero in vecinos3lugar[vecino]
+                    and self.lugares_vecinos >= 3
+                    and self.numeros_a_jugar[vecino] > 0
+                ):
                     if vecino not in self.numeros_predecidos:
-                        # self.numeros_predecidos.append(vecino)
+                        self.numeros_predecidos[vecino] = self.numeros_a_jugar[vecino]
                         self.contador.incrementar_aciertos_vecinos_3lugar()
                         es_vecino3lugar = True
 
-                if numero in Vecino4lugar[vecino]:
+                if (
+                    numero in Vecino4lugar[vecino]
+                    and self.lugares_vecinos >= 4
+                    and self.numeros_a_jugar[vecino] > 0
+                ):
                     if vecino not in self.numeros_predecidos:
-                        # self.numeros_predecidos.append(vecino)
+                        self.numeros_predecidos[vecino] = self.numeros_a_jugar[vecino]
                         self.contador.incrementar_aciertos_vecinos_4lugar()
                         es_vecino4lugar = True
 
-            for key in self.resultados:
-                self.resultados[key] += 1
-
             for x in list(self.numeros_predecidos):
-                del self.resultados[x]
-
-            for num in list(self.resultados.keys()):
-                if self.resultados[num] >= self.limite:
-                    del self.resultados[num]
-                    self.no_salidos.append(num)
-                    self.contador.incrementar_supero_limite()
-
+                del self.numeros_a_jugar[x]
+            
             if es_vecino1lugar:
                 self.df_nuevo.at[len(self.df_nuevo), "V1L"] = "V1L"
 
@@ -250,8 +352,8 @@ class Predictor:
     # Actualiza el DataFrame con el número ingresado y los resultados de las predicciones.
     def actualizar_dataframe(self, numero_ingresado):
         self.df_nuevo.loc[len(self.df_nuevo) + 1, "Salidos"] = (numero_ingresado,)
-        # self.df_nuevo.at[len(self.df_nuevo), "Resultados"] = str(self.resultados)
-        self.df_nuevo.loc[len(self.df_nuevo), "Resultados"] = str(self.resultados)
+        resultados_filtrados = {k: v for k, v in self.numeros_a_jugar.items() if v > 0}
+        self.df_nuevo.loc[len(self.df_nuevo), "Resultados"] = str(resultados_filtrados)
         self.df_nuevo.loc[len(self.df_nuevo), "Orden"] = self.contador.ingresados
         self.df_nuevo.loc[len(self.df_nuevo), "Acertados"] = str(
             self.numeros_predecidos
@@ -265,29 +367,22 @@ class Predictor:
 
     # Muestra los resultados y las estadísticas.
     def mostrar_resultados(self):
-        print(self.df_nuevo.tail(5))
+        print(self.df_nuevo.tail(3))
         print(f"Numeros Jugados: {self.contador.jugados}")
         print(f"Aciertos Totales: {self.contador.aciertos_totales}")
         print(f"Sin salir: {self.contador.Sin_salir_nada}\n")
-        print(f"Aciertos Predecidos: {self.contador.acierto_predecidos}")
-        print(f"Aciertos v1 lugar : {self.contador.acierto_vecinos_1lugar}")
-        print(f"Aciertos v2 lugar: {self.contador.acierto_vecinos_2lugar}")
-        # print(f"Aciertos v3 lugar: {self.contador.acierto_vecinos_3lugar}")
-        # print(f"Aciertos v4 lugar : {self.contador.acierto_vecinos_4lugar}\n")
 
         for e in self.numeros_predecidos:
             print(f"El Número {e} fue acertado de la lista de predecidos.")
 
-        for x in self.no_salidos:
-            print(f"El Número {x} eliminado por que supero el limite.")
+        if len(self.no_salidos) > 0:
+            print(f"Eliminados por no superar el limite: {self.no_salidos}")
 
-        if len(self.resultados) > 0:
-            # print(
-            #     f"\nLas posibles predicciones para el próximo número son: {self.resultados}\n"
-            # )
+        if len(self.numeros_a_jugar) > 0:
             print("\nLas posibles predicciones para el próximo número son:")
-            for key in self.resultados:
-                print(f"jugar {key} = {self.resultados[key]}")
+            for key in self.numeros_a_jugar:
+                if self.numeros_a_jugar[key] > 0:
+                    print(f"jugar {key} = {self.numeros_a_jugar[key]}")
 
     # Borra el último número ingresado y actualiza el contador.
     def borrar(self):
@@ -298,9 +393,9 @@ class Predictor:
                 :-1
             ]  # Eliminar la última fila del DataFrame nuevo
 
-            if len(self.resultados) > 0:
-                for key in self.resultados:
-                    self.resultados[key] -= 1
+            if len(self.numeros_a_jugar) > 0:
+                for key in self.numeros_a_jugar:
+                    self.numeros_a_jugar[key] -= 1
 
         print(f"Último número borrado {ultimonun}")
 

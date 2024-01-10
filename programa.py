@@ -37,7 +37,7 @@ def main():
                         )
                         continue
 
-                    predictor.verificar_predecidos(numero)
+                    predictor.verificar_predecidos2(numero)
                     predictor.predecir()
                     predictor.actualizar_dataframe(numero)
                     predictor.mostrar_resultados()
