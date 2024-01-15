@@ -31,8 +31,8 @@ class Predictor:
         self.nombreModelo = "Model_" + self.filebasename
         self.df = pd.read_excel(filename, sheet_name="Salidos")
         self.contador = Contador()
-        # self.contador.numeros = self.df["Salidos"].values.tolist()
-        self.contador.numeros = self.df["Salidos"].head(3500).tolist()
+        self.contador.numeros = self.df["Salidos"].values.tolist()
+        # self.contador.numeros = self.df["Salidos"].head(3500).tolist()
 
         self.numeros_a_jugar = dict()
         self.numeros_predecidos = dict()
@@ -52,8 +52,10 @@ class Predictor:
         self.lsmt2 = 128
         self.l2_lambda = 0.001
         self.dropout_rate = 0.05
-        self.learning_rate = 0.003  # Tasa de aprendizaje inicial
-        self.epoc = 100
+        self.learning_rate = 0.003
+        
+        self.epoc = 100 if len(self.contador.numeros) > 1000 else 10
+
         self.batchSize = 500
 
         # Ruta relativa a la carpeta "modelo" en el mismo directorio que tu archivo de código
@@ -182,6 +184,7 @@ class Predictor:
                     self.contador.incrementar_jugados()
                 if num not in self.pretendientes:
                     self.pretendientes[num] = 0
+                    print(f"pretendiente: {num} probabilidad {probabilidad_redondeada}%")
 
             for x in list(self.numeros_a_jugar):
                 if x in self.pretendientes:
@@ -294,10 +297,11 @@ class Predictor:
 
     # Muestra los resultados y las estadísticas.
     def mostrar_resultados(self):
+        print("\nTabla de resultados:")
         print(self.df_nuevo.tail(3))
         print(f"Numeros Jugados: {self.contador.jugados}")
         print(f"Aciertos Totales: {self.contador.aciertos_totales}")
-        print(f"Sin salir: {self.contador.Sin_salir_nada}\n")
+        # print(f"Sin salir: {self.contador.Sin_salir_nada}\n")
 
         for e in self.numeros_predecidos:
             print(f"El Número {e} fue acertado de la lista de predecidos.")
