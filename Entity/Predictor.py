@@ -43,7 +43,7 @@ class Predictor:
         self.numerosAnteriores = 5
         self.lugares_vecinos = 3
         self.numeros_a_predecir = 10
-        self.umbral_probilidad = 0.30
+        self.umbral_probilidad = 0.9
         self.limite = 3
 
         # hiperparamtros
@@ -172,27 +172,32 @@ class Predictor:
                 predicciones_filtradas, key=lambda i: predicciones[0][i], reverse=True
             )
 
-            for key in self.pretendientes:
-                self.pretendientes[key] += 1
+            # for key in self.pretendientes:
+            #     self.pretendientes[key] += 1
 
             for num in predecidos:
                 probabilidad_redondeada = int(round(predicciones[0][num], 2) * 100)
                 if num in self.numeros_a_jugar:
                     self.numeros_a_jugar[num] += probabilidad_redondeada
-                if num in self.pretendientes:
+                else:
                     self.numeros_a_jugar[num] = probabilidad_redondeada
                     self.contador.incrementar_jugados()
-                if num not in self.pretendientes:
-                    self.pretendientes[num] = 0
-                    print(f"pretendiente: {num} probabilidad {probabilidad_redondeada}%")
+                    
+                    
+                # if num in self.pretendientes:
+                #     self.numeros_a_jugar[num] = probabilidad_redondeada
+                #     self.contador.incrementar_jugados()
+                # if num not in self.pretendientes:
+                #     self.pretendientes[num] = 0
+                    # print(f"pretendiente: {num} probabilidad {probabilidad_redondeada}%")
 
-            for x in list(self.numeros_a_jugar):
-                if x in self.pretendientes:
-                    del self.pretendientes[x]
+            # for x in list(self.numeros_a_jugar):
+            #     if x in self.pretendientes:
+            #         del self.pretendientes[x]
 
-            for num in list(self.pretendientes.keys()):
-                if self.pretendientes[num] >= self.limite:
-                    del self.pretendientes[num]
+            # for num in list(self.pretendientes.keys()):
+            #     if self.pretendientes[num] >= self.limite:
+            #         del self.pretendientes[num]
 
             self.numeros_a_jugar = {
                 k: v
