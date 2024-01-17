@@ -1,7 +1,7 @@
 # Función principal que ejecuta el programa.
 import os
 # from Entity.Predictor import Predictor
-from Entity.Predictor import Predictor
+from Entity.Predictor_object import Predictor
 
 
 def main():
@@ -37,7 +37,7 @@ def main():
                         )
                         continue
 
-                    predictor.verificar_predecidos2(numero)
+                    predictor.verificar_predecidos(numero)
                     predictor.predecir()
                     predictor.actualizar_dataframe(numero)
                     predictor.mostrar_resultados()
