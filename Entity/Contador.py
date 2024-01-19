@@ -11,7 +11,16 @@ class Contador:
         self.jugados = 0
         self.aciertos_totales = 0
         self.Sin_salir_nada = 0
+        self.ganancia_totales = 0
+        self.perdida_total = 0
+        self.ganancia_neta = 0
+        self.capital_inicial = 0
 
+    def Calcular_ganancia(self):
+        self.ganancia_neta = self.ganancia_totales - self.perdida_total
+        return self.ganancia_neta
+    def incrementar_ganancias_totales(self, ganancia_neta):
+        self.ganancia_totales += ganancia_neta
     def incrementar_ingresados(self, numero):
         self.ingresados += 1
         self.numeros.append(numero)
@@ -47,11 +56,12 @@ class Contador:
     def incrementar_aciertos_vecinos_4lugar(self):
         self.acierto_vecinos_4lugar += 1
 
-    def incrementar_supero_limite(self):
+    def incrementar_supero_limite(self, perdida):
         self.Sin_salir_nada += 1
+        self.perdida_total += perdida
 
     def sacarEfectividad(self):
         if self.jugados == 0:
             return 0
         else:
-            (self.aciertos_totales / self.jugados)
+          return  (self.aciertos_totales / self.jugados)

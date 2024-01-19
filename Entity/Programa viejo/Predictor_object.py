@@ -32,7 +32,6 @@ class Predictor:
         self.df = pd.read_excel(filename, sheet_name="Salidos")
         self.contador = Contador()
         self.contador.numeros = self.df["Salidos"].values.tolist()
-        # self.contador.numeros = self.df["Salidos"].head(3500).tolist()
 
         self.numeros_a_jugar = list()
         self.numeros_pretendientes = list()
@@ -45,6 +44,7 @@ class Predictor:
         self.numeros_a_predecir = 10
         self.umbral_probilidad = 100
         self.limite = 5
+        self.valor_ficha = 500
 
         # hiperparamtros
         self.lsmt = 320
@@ -179,7 +179,7 @@ class Predictor:
                         if pretendiente.numero == num:
                             pretendiente.Aumentar_probailidad(probabilidad_redondeada)
                 else:
-                    nuevo_pretendiente = Numero(num, probabilidad_redondeada)
+                    nuevo_pretendiente = Numero(num, probabilidad_redondeada ,self.valor_ficha, self.lugares_vecinos)
                     if any(n.numero == num for n in self.numeros_pretendientes):
                         for pretendiente in self.numeros_pretendientes:
                             if pretendiente.numero == num:
@@ -267,17 +267,24 @@ class Predictor:
                 n
                 for n in self.numeros_a_jugar
                 if n not in self.numeros_predecidos
+
             ]
+
+
+            for x in self.numeros_predecidos:
+                x.Pego()
+                self.contador.incrementar_ganancias_totales(x.ganancia_neta)
 
             for obj in self.numeros_a_jugar[:]:
                 if obj.tardancia == self.limite:
                     self.no_salidos.append(obj.numero) 
                     self.numeros_a_jugar.remove(obj)
-                    self.contador.incrementar_supero_limite()
+                    self.contador.incrementar_supero_limite(obj.jugado)
 
             for x in self.numeros_pretendientes[:]:
                 if x.tardancia == self.limite:
                     self.numeros_pretendientes.remove(x)
+                    
 
 
 
@@ -305,9 +312,10 @@ class Predictor:
         resultados_str = ",".join([str(obj) for obj in self.numeros_a_jugar])
         predecidos_str = ",".join([str(obj) for obj in self.numeros_predecidos])
         self.df_nuevo.loc[len(self.df_nuevo), "Resultados"] = resultados_str
-        self.df_nuevo.loc[len(self.df_nuevo), "Orden"] = self.contador.ingresados
         self.df_nuevo.loc[len(self.df_nuevo), "Acertados"] = predecidos_str
         self.df_nuevo.loc[len(self.df_nuevo), "No salidos"] = str(self.no_salidos)
+        self.df_nuevo.loc[len(self.df_nuevo), "Ganancia_neta"] = str(self.contador.Calcular_ganancia())
+        self.df_nuevo.loc[len(self.df_nuevo), "Orden"] = self.contador.ingresados
 
     # Guarda el DataFrame en un archivo de Excel.
     def guardar_excel(self):
@@ -320,10 +328,11 @@ class Predictor:
         print(self.df_nuevo.tail(3))
         print(f"Numeros Jugados: {self.contador.jugados}")
         print(f"Aciertos Totales: {self.contador.aciertos_totales}")
-        print(f"Sin salir: {self.contador.Sin_salir_nada}\n")
+        print(f"Sin salir: {self.contador.Sin_salir_nada}")
+        print(f"Ganancia_neta: {self.contador.ganancia_neta}\n")
 
         for e in self.numeros_predecidos:
-            print(f"El Número {e.numero} fue acertado de la lista de predecidos.")
+            print(f"El Número {e.numero} fue acertado de la lista de predecidos ganancia neta {e.ganancia_neta}.")
 
         if len(self.no_salidos) > 0:
             print(f"Eliminados por superar el limite: {self.no_salidos}")
@@ -370,6 +379,7 @@ class Predictor:
             "Nros Anteriores": self.numerosAnteriores,
             "Efectividad": self.contador.sacarEfectividad(),
             "Ruleta": self.filename,
+            "Ganancia": self.contador.ganancia_neta
         }
 
         # Convertir el diccionario en un DataFrame de Pandas
