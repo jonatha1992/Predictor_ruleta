@@ -15,12 +15,16 @@ class Contador:
         self.perdida_total = 0
         self.ganancia_neta = 0
         self.capital_inicial = 0
+        self.maxima_ganancia = 0
+        self.maxima_perdida = 0
 
     def Calcular_ganancia(self):
         self.ganancia_neta = self.ganancia_totales - self.perdida_total
         return self.ganancia_neta
+
     def incrementar_ganancias_totales(self, ganancia_neta):
         self.ganancia_totales += ganancia_neta
+
     def incrementar_ingresados(self, numero):
         self.ingresados += 1
         self.numeros.append(numero)
@@ -64,4 +68,4 @@ class Contador:
         if self.jugados == 0:
             return 0
         else:
-          return  (self.aciertos_totales / self.jugados)
+            return self.aciertos_totales / self.jugados

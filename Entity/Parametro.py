@@ -15,15 +15,23 @@ class HiperParametros:
 
 class Parametro_Juego:
     # Inicializa el objeto de la clase con un nombre de archivo y crea el modelo.
-    def __init__(self, valor_apuesta, **kwargs):
+    def __init__(
+        self,
+        valor_apuesta,
+        cantidad_vecinos,
+        limite_juego,
+        limite_pretendiente,
+        umbral_probabilidad,
+        **kwargs
+    ):
         # Parametros juegos
         self.valor_ficha = valor_apuesta
-        self.lugares_vecinos = 3
+        self.limite_pretendiente = limite_pretendiente
+        self.limite_juego = limite_juego
+        self.lugares_vecinos = cantidad_vecinos
         self.numerosAnteriores = 5
         self.numeros_a_predecir = 10
-        self.umbral_probilidad = 100
-        self.limite = 5
-
+        self.umbral_probilidad = umbral_probabilidad
         # Usar kwargs para personalizar atributos adicionales
         if "numeros_a_predecir" in kwargs:
             self.numeros_a_predecir = kwargs["numeros_a_predecir"]
@@ -33,9 +41,3 @@ class Parametro_Juego:
 
         if "numerosAnteriores" in kwargs:
             self.numerosAnteriores = kwargs["numerosAnteriores"]
-
-        if "umbral_probilidad" in kwargs:
-            self.umbral_probilidad = kwargs["umbral_probilidad"]
-
-        if "limite" in kwargs:
-            self.limite = kwargs["limite"]

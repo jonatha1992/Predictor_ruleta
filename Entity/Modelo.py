@@ -105,9 +105,9 @@ class Modelo:
     def _crear_secuencias(self):
         secuencias = []
         siguientes_numeros = []
-        for i in range(len(self.contador.numeros) - (self.hiperparametros.numerosAnteriores + 1)):
-            secuencias.append(self.contador.numeros[i : i + self.hiperparametros.numerosAnteriores])
-            siguientes_numeros.append(self.contador.numeros[i + self.hiperparametros.numerosAnteriores])
+        for i in range(len(self.numeros) - (self.hiperparametros.numerosAnteriores + 1)):
+            secuencias.append(self.numeros[i : i + self.hiperparametros.numerosAnteriores])
+            siguientes_numeros.append(self.numeros[i + self.hiperparametros.numerosAnteriores])
         secuencias = pad_sequences(np.array(secuencias))
         siguientes_numeros = to_categorical(np.array(siguientes_numeros))
         return secuencias, siguientes_numeros
