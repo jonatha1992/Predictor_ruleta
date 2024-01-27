@@ -62,7 +62,7 @@ class Predictor:
             self.verificar_pretendientes()
 
     def verificar_pretendientes(self):
-        numeros_agregar = list()
+        # numeros_agregar = list()
         self.no_salidos = []
 
         for pretendiente in self.numeros_pretendientes:
@@ -76,17 +76,17 @@ class Predictor:
                     self.Parametro_juego.valor_ficha,
                     self.Parametro_juego.lugares_vecinos,
                 )
-                numeros_agregar.append(new_numero)
-                # self.numeros_a_jugar.append(new_numero)
+                # numeros_agregar.append(new_numero)
+                self.numeros_a_jugar.append(new_numero)
                 self.numeros_pretendientes.remove(pretendiente)
                 self.contador.incrementar_jugados()
 
-        if numeros_agregar != []:
-            self.no_salidos.extend(self.numeros_a_jugar)
-            self.numeros_a_jugar = list()
-            self.numeros_a_jugar.extend(numeros_agregar)
+        # if numeros_agregar != []:
+        #     self.no_salidos.extend(self.numeros_a_jugar)
+        #     self.numeros_a_jugar = list()
+        #     self.numeros_a_jugar.extend(numeros_agregar)
 
-            # Ordena los numeros_a_jugar2 por probabilidad descendente
+        # Ordena los numeros_a_jugar2 por probabilidad descendente
         self.numeros_a_jugar = sorted(
             self.numeros_a_jugar,
             key=lambda x: (x.tardancia, x.probabilidad),

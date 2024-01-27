@@ -12,9 +12,9 @@ import pandas as pd
 class Parametro_Juego_simulacion:
     def __init__(self):
         self.valores_ficha = [1000]
-        self.cantidad_vecinos = [0, 1, 2]
-        self.limites_juego = [8, 9, 10, 11, 12]
-        self.limites_pretendiente = [4, 5, 6, 7, 8]
+        self.cantidad_vecinos = [0, 1, 2, 3, 4]
+        self.limites_juego = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+        self.limites_pretendiente = [4, 5, 6]
         self.umbrales_probabilidad = [100]
 
     def obtener_todas_combinaciones(self):
