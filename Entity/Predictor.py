@@ -62,6 +62,9 @@ class Predictor:
             self.verificar_pretendientes()
 
     def verificar_pretendientes(self):
+        numeros_agregar = list()
+        self.no_salidos = []
+
         for pretendiente in self.numeros_pretendientes:
             if (
                 pretendiente.probabilidad >= self.Parametro_juego.umbral_probilidad
@@ -73,9 +76,15 @@ class Predictor:
                     self.Parametro_juego.valor_ficha,
                     self.Parametro_juego.lugares_vecinos,
                 )
-                self.numeros_a_jugar.append(new_numero)
+                numeros_agregar.append(new_numero)
+                # self.numeros_a_jugar.append(new_numero)
                 self.numeros_pretendientes.remove(pretendiente)
                 self.contador.incrementar_jugados()
+
+        if numeros_agregar != []:
+            self.no_salidos.extend(self.numeros_a_jugar)
+            self.numeros_a_jugar = list()
+            self.numeros_a_jugar.extend(numeros_agregar)
 
             # Ordena los numeros_a_jugar2 por probabilidad descendente
         self.numeros_a_jugar = sorted(
@@ -111,7 +120,6 @@ class Predictor:
         es_vecino4lugar = False
 
         self.numeros_predecidos = list()
-        self.no_salidos = []
         self.contador.incrementar_ingresados(numero)
 
         if len(self.numeros_a_jugar) > 0:
@@ -202,16 +210,18 @@ class Predictor:
         for obj in self.numeros_a_jugar:
             if obj.tardancia == self.Parametro_juego.limite_juego:
                 objetos_a_eliminar.append(obj)
-            elif (
-                obj.tardancia == self.Parametro_juego.limite_pretendiente
-                and obj.repetido == 0
-            ):
-                objetos_a_eliminar.append(obj)
+            # elif (
+            #     obj.tardancia == self.Parametro_juego.limite_pretendiente
+            #     and obj.repetido == 0
+            # ):
+            #     objetos_a_eliminar.append(obj)
 
         # Eliminar los objetos recopilados
         for obj in objetos_a_eliminar:
             self.no_salidos.append(obj)
             self.numeros_a_jugar.remove(obj)
+
+        for obj in self.no_salidos:  # Incrementar el contador de supero el limite
             self.contador.incrementar_supero_limite(obj.jugado)
 
         for x in self.numeros_pretendientes[:]:
