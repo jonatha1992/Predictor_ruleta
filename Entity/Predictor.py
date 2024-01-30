@@ -62,9 +62,6 @@ class Predictor:
             self.verificar_pretendientes()
 
     def verificar_pretendientes(self):
-        # numeros_agregar = list()
-        self.no_salidos = []
-
         for pretendiente in self.numeros_pretendientes:
             if (
                 pretendiente.probabilidad >= self.Parametro_juego.umbral_probilidad
@@ -76,15 +73,9 @@ class Predictor:
                     self.Parametro_juego.valor_ficha,
                     self.Parametro_juego.lugares_vecinos,
                 )
-                # numeros_agregar.append(new_numero)
                 self.numeros_a_jugar.append(new_numero)
                 self.numeros_pretendientes.remove(pretendiente)
                 self.contador.incrementar_jugados()
-
-        # if numeros_agregar != []:
-        #     self.no_salidos.extend(self.numeros_a_jugar)
-        #     self.numeros_a_jugar = list()
-        #     self.numeros_a_jugar.extend(numeros_agregar)
 
         # Ordena los numeros_a_jugar2 por probabilidad descendente
         self.numeros_a_jugar = sorted(
@@ -121,6 +112,7 @@ class Predictor:
 
         self.numeros_predecidos = list()
         self.contador.incrementar_ingresados(numero)
+        self.no_salidos = []
 
         if len(self.numeros_a_jugar) > 0:
             if any(
@@ -203,18 +195,12 @@ class Predictor:
                 self.contador.incrementar_aciertos_totales(len(self.numeros_predecidos))
 
     def Verificar_limites_numeros(self):
-        # Lista para almacenar los objetos a eliminar
         objetos_a_eliminar = []
 
         # Primero recopilar todos los objetos que deben eliminarse
         for obj in self.numeros_a_jugar:
             if obj.tardancia == self.Parametro_juego.limite_juego:
                 objetos_a_eliminar.append(obj)
-            # elif (
-            #     obj.tardancia == self.Parametro_juego.limite_pretendiente
-            #     and obj.repetido == 0
-            # ):
-            #     objetos_a_eliminar.append(obj)
 
         # Eliminar los objetos recopilados
         for obj in objetos_a_eliminar:

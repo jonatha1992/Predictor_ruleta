@@ -1,5 +1,6 @@
 import os
 import itertools
+from Entity.Contador import Contador
 
 from Entity.Parametro import Parametro_Juego
 from Entity.Predictor import Predictor
@@ -12,10 +13,10 @@ import pandas as pd
 class Parametro_Juego_simulacion:
     def __init__(self):
         self.valores_ficha = [1000]
-        self.cantidad_vecinos = [0, 1, 2, 3, 4]
-        self.limites_juego = [1, 2, 3, 4, 5, 6, 7, 8, 9]
-        self.limites_pretendiente = [4, 5, 6]
-        self.umbrales_probabilidad = [100]
+        self.cantidad_vecinos = [0, 1, 2, 3]
+        self.limites_juego = [4, 5, 6, 7, 8, 9, 10, 11, 12]
+        self.limites_pretendiente = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        self.umbrales_probabilidad = [100, 150, 200, 250]
 
     def obtener_todas_combinaciones(self):
         return itertools.product(
@@ -80,13 +81,15 @@ def main():
         predictor = Predictor(carpeta, parametro_juego)
 
         for array in simulador.arrays:
+            predictor.contador = Contador()
+            print(f"ganancia_neta_inicio: {predictor.contador.ganancia_neta}")
             for numero in array:
                 if numero == "salir":
                     predictor.guardar_excel(False, nombre_archivo_reporte)
                     break
                 predictor.verificar_resultados(numero)
                 predictor.predecir()
-
+            print(f"ganancia_neta_final: {predictor.contador.ganancia_neta}")
         # Guardar resultados después de cada combinación
         print(
             f"Simulación completada con: VF:{parametro_juego.valor_ficha}, CV:{parametro_juego.lugares_vecinos}, LJ:{parametro_juego.limite_juego}, LP:{parametro_juego.limite_pretendiente}, P:{parametro_juego.umbral_probilidad}"

@@ -61,4 +61,4 @@ class Numero_jugar:
         self.jugado += jugadaAhora
 
     def __str__(self):
-        return f"(N:{self.numero},P:{self.probabilidad},T:{self.tardancia},R:{self.repetido},P:{self.pleno},J:{self.jugado})"
+        return f"(N:{self.numero},P:{self.probabilidad},T:{self.tardancia},R:{self.repetido},PL:{self.pleno},J:{self.jugado})"

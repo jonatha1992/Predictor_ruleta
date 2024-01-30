@@ -37,7 +37,7 @@ def main():
                 if opcion.lower() == "salir":
                     print(numerosingresado)
                     predictor.guardar_excel()
-                    os.system(f"start excel Reportes_juego.xlsx")
+                    os.system(f"start excel Reporte_juego.xlsx")
                     break
 
                 if opcion.lower() == "-":
