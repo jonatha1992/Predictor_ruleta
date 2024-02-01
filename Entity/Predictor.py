@@ -52,6 +52,8 @@ class Predictor:
                 predicciones_filtradas, key=lambda i: predicciones[0][i], reverse=True
             )
 
+            self.Verificar_limites_numeros()
+
             for numero_jugado in self.numeros_a_jugar:
                 numero_jugado.Jugar()
             for Numero_pretendiente in self.numeros_pretendientes:
@@ -177,8 +179,6 @@ class Predictor:
                 x.Pego()
                 self.contador.incrementar_ganancias_totales(x.ganancia_neta)
 
-            self.Verificar_limites_numeros()
-
             if es_vecino1lugar:
                 self.df_nuevo.at[len(self.df_nuevo), "V1L"] = "V1L"
 
@@ -195,24 +195,20 @@ class Predictor:
                 self.contador.incrementar_aciertos_totales(len(self.numeros_predecidos))
 
     def Verificar_limites_numeros(self):
-        objetos_a_eliminar = []
-
         # Primero recopilar todos los objetos que deben eliminarse
-        for obj in self.numeros_a_jugar:
-            if obj.tardancia == self.Parametro_juego.limite_juego:
-                objetos_a_eliminar.append(obj)
+        for obj in self.numeros_a_jugar[:]:
+            if obj.tardancia >= self.Parametro_juego.limite_juego:
+                self.no_salidos.append(obj)
+                self.numeros_a_jugar.remove(obj)
 
         # Eliminar los objetos recopilados
-        for obj in objetos_a_eliminar:
-            self.no_salidos.append(obj)
-            self.numeros_a_jugar.remove(obj)
+        for x in self.numeros_pretendientes[:]:
+            if x.tardancia >= self.Parametro_juego.limite_pretendiente:
+                self.numeros_pretendientes.remove(x)
+                # print(f"se elimino {x} de pretendientes")
 
         for obj in self.no_salidos:  # Incrementar el contador de supero el limite
             self.contador.incrementar_supero_limite(obj.jugado)
-
-        for x in self.numeros_pretendientes[:]:
-            if x.tardancia == self.Parametro_juego.limite_pretendiente:
-                self.numeros_pretendientes.remove(x)
 
     # Actualiza el DataFrame con el número ingresado y los resultados de las predicciones.
     def actualizar_dataframe(self, numero_ingresado):
