@@ -212,17 +212,14 @@ class Predictor:
         for obj in self.no_salidos:  # Incrementar el contador de supero el limite
             self.contador.incrementar_supero_limite(obj.jugado)
 
-<<<<<<< HEAD
         if len(self.no_salidos) > 0:  # si perdio se actualiza el valor
             self.Parametro_juego.aumentar_valor_ficha()
 
-=======
         for x in self.numeros_pretendientes[:]:
             if x.tardancia == self.Parametro_juego.limite_pretendiente:
                 self.numeros_pretendientes.remove(x)
 
     # Actualiza el DataFrame con el número ingresado y los resultados de las predicciones.
->>>>>>> parent of bb7c521 (confirmar cambios de)
     def actualizar_dataframe(self, numero_ingresado):
         self.df_nuevo.loc[len(self.df_nuevo) + 1, "Salidos"] = numero_ingresado
 
