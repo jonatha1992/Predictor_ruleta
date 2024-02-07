@@ -52,8 +52,6 @@ class Predictor:
                 predicciones_filtradas, key=lambda i: predicciones[0][i], reverse=True
             )
 
-            self.Verificar_limites_numeros()
-
             for numero_jugado in self.numeros_a_jugar:
                 numero_jugado.Jugar()
             for Numero_pretendiente in self.numeros_pretendientes:
@@ -180,6 +178,8 @@ class Predictor:
                 self.contador.incrementar_ganancias_totales(x.ganancia_neta)
                 self.Parametro_juego.bajar_valor_ficha()
 
+            self.Verificar_limites_numeros()
+
             if es_vecino1lugar:
                 self.df_nuevo.at[len(self.df_nuevo), "V1L"] = "V1L"
 
@@ -197,24 +197,32 @@ class Predictor:
             self.Parametro_juego.bajar_valor_ficha()
 
     def Verificar_limites_numeros(self):
+        objetos_a_eliminar = []
+
         # Primero recopilar todos los objetos que deben eliminarse
-        for obj in self.numeros_a_jugar[:]:
-            if obj.tardancia >= self.Parametro_juego.limite_juego:
-                self.no_salidos.append(obj)
-                self.numeros_a_jugar.remove(obj)
+        for obj in self.numeros_a_jugar:
+            if obj.tardancia == self.Parametro_juego.limite_juego:
+                objetos_a_eliminar.append(obj)
 
         # Eliminar los objetos recopilados
-        for x in self.numeros_pretendientes[:]:
-            if x.tardancia >= self.Parametro_juego.limite_pretendiente:
-                self.numeros_pretendientes.remove(x)
-                # print(f"se elimino {x} de pretendientes")
+        for obj in objetos_a_eliminar:
+            self.no_salidos.append(obj)
+            self.numeros_a_jugar.remove(obj)
 
         for obj in self.no_salidos:  # Incrementar el contador de supero el limite
             self.contador.incrementar_supero_limite(obj.jugado)
 
+<<<<<<< HEAD
         if len(self.no_salidos) > 0:  # si perdio se actualiza el valor
             self.Parametro_juego.aumentar_valor_ficha()
 
+=======
+        for x in self.numeros_pretendientes[:]:
+            if x.tardancia == self.Parametro_juego.limite_pretendiente:
+                self.numeros_pretendientes.remove(x)
+
+    # Actualiza el DataFrame con el número ingresado y los resultados de las predicciones.
+>>>>>>> parent of bb7c521 (confirmar cambios de)
     def actualizar_dataframe(self, numero_ingresado):
         self.df_nuevo.loc[len(self.df_nuevo) + 1, "Salidos"] = numero_ingresado
 
