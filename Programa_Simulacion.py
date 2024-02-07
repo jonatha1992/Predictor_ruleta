@@ -12,10 +12,10 @@ import pandas as pd
 
 class Parametro_Juego_simulacion:
     def __init__(self):
-        self.valores_ficha = [1000]
+        self.valores_ficha = [200]
         self.cantidad_vecinos = [0, 1, 2, 3]
         self.limites_juego = [4, 5, 6, 7, 8, 9, 10, 11, 12]
-        self.limites_pretendiente = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        self.limites_pretendiente = [4, 5, 6, 7, 8, 9, 10]
         self.umbrales_probabilidad = [100, 150, 200, 250]
 
     def obtener_todas_combinaciones(self):
@@ -71,18 +71,18 @@ def main():
             print("El archivo Excel no existe. No se puede instanciar el Predictor.")
             continue
 
-        parametro_juego = Parametro_Juego(
-            valor_ficha,
-            cantidad_vecinos,
-            limite_juego,
-            limite_pretendiente,
-            umbral_probabilidad,
-        )
-        predictor = Predictor(carpeta, parametro_juego)
-
         for array in simulador.arrays:
+            parametro_juego = Parametro_Juego(
+                valor_ficha,
+                cantidad_vecinos,
+                limite_juego,
+                limite_pretendiente,
+                umbral_probabilidad,
+            )
+            predictor = Predictor(carpeta, parametro_juego)
             predictor.contador = Contador()
-            print(f"ganancia_neta_inicio: {predictor.contador.ganancia_neta}")
+            predictor.Parametro_juego = parametro_juego
+
             for numero in array:
                 if numero == "salir":
                     predictor.guardar_excel(False, nombre_archivo_reporte)

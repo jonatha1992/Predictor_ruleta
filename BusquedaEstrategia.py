@@ -1,39 +1,45 @@
 import pandas as pd
 
-# Reemplaza 'ruta_al_archivo.xlsx' con la ruta de tu archivo Excel real
-ruta_al_archivo = "Reportes_simulacion copy.xlsx"
-
-# Cargar los datos en un DataFrame de pandas
+# Asumiendo que ya tienes la ruta al archivo Excel definida y los datos cargados en `df`
+ruta_al_archivo = "Reportes_simulacion.xlsx"
 df = pd.read_excel(ruta_al_archivo)
 
 # Filtrar las estrategias donde la ganancia ha sido positiva
 estrategias_positivas = df[df["Ganancia"] > 0]
 
-# Agrupar por 'numeros jugados', 'plenos', 'valor ficha' para definir una estrategia
-estrategias_agrupadas = estrategias_positivas.groupby(
-    ["Cant. Vecinos", "Limite_juego", "Limite_pretendiente", "Probabilidad"]
+# Agrupar por las columnas relevantes para definir una estrategia
+estrategias_agrupadas = (
+    estrategias_positivas.groupby(
+        ["Cant. Vecinos", "Limite_juego", "Limite_pretendiente", "Probabilidad"]
+    )
+    .agg(
+        Veces_Positive=("Ganancia", "count"),  # Contar cuántas veces fue positiva
+        Ganancia_Total=("Ganancia", "sum"),  # Sumar la ganancia total
+        Efectividad_Media=("Efectividad", "mean"),  # Calcular la efectividad media
+    )
+    .reset_index()
 )
 
-# Calcular la cantidad de veces que la estrategia fue positiva y la efectividad media
-estrategias_stats = estrategias_agrupadas.agg(
-    Veces_Positive=("Ganancia", "count"), Efectividad_Media=("Efectividad", "mean")
-).reset_index()
-
-# Filtrar aquellas estrategias que han sido positivas más de una vez y tienen una efectividad alta
-# Supongamos que consideramos una efectividad alta como aquella que está en el cuartil superior
-umbral_efectividad = estrategias_stats["Efectividad_Media"].quantile(0.75)
-estrategias_recomendadas = estrategias_stats[
-    (estrategias_stats["Veces_Positive"] > 1)
-    & (estrategias_stats["Efectividad_Media"] > umbral_efectividad)
+# Filtrar aquellas estrategias que han sido positivas en todas las instancias
+# Esto asume que tienes una columna o manera de identificar todas las instancias de cada estrategia
+# Y quieres aquellas que siempre fueron positivas, no solo más de una vez
+estrategias_100_positivas = estrategias_agrupadas[
+    estrategias_agrupadas["Veces_Positive"]
+    == estrategias_agrupadas["Veces_Positive"].max()
 ]
 
-# Ordenar las estrategias recomendadas por efectividad media de manera descendente
-estrategias_recomendadas = estrategias_recomendadas.sort_values(
-    by="Efectividad_Media", ascending=False
+# Ordenar por 'Cant. Vecinos' y 'Limite_juego' para priorizar estrategias con menos vecinos y menor límite de juego
+estrategias_ordenadas = estrategias_100_positivas.sort_values(
+    by=["Cant. Vecinos", "Limite_juego", "Efectividad_Media"],
+    ascending=[True, True, False],
 )
 
-# Tomar las primeras 10 estrategias recomendadas
-top_estrategias = estrategias_recomendadas.head(10)
-top_estrategias.to_excel("Mejores_estrategias.xlsx", index=False)
+# Tomar las estrategias que cumplen con los criterios
+estrategias_seleccionadas = estrategias_ordenadas.head(
+    10
+)  # Ajustar según cuántas quieras seleccionar
 
-print("Se imprimio el archivo 'Mejores_estrategias.xlsx'")
+# Guardar las estrategias seleccionadas en un nuevo archivo Excel
+estrategias_seleccionadas.to_excel("Estrategias_Optimas.xlsx", index=False)
+
+print("Se imprimió el archivo 'Estrategias_Optimas.xlsx'")

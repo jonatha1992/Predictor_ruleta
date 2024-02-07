@@ -175,9 +175,10 @@ class Predictor:
                 n for n in self.numeros_a_jugar if n not in self.numeros_predecidos
             ]
 
-            for x in self.numeros_predecidos:
+            for x in self.numeros_predecidos:  # si se gano se actualiza el valor
                 x.Pego()
                 self.contador.incrementar_ganancias_totales(x.ganancia_neta)
+                self.Parametro_juego.bajar_valor_ficha()
 
             if es_vecino1lugar:
                 self.df_nuevo.at[len(self.df_nuevo), "V1L"] = "V1L"
@@ -191,8 +192,9 @@ class Predictor:
             if es_vecino4lugar:
                 self.df_nuevo.at[len(self.df_nuevo), "V4L"] = "V4L"
 
-            if len(self.numeros_predecidos) > 0:
-                self.contador.incrementar_aciertos_totales(len(self.numeros_predecidos))
+        if len(self.numeros_predecidos) > 0:
+            self.contador.incrementar_aciertos_totales(len(self.numeros_predecidos))
+            self.Parametro_juego.bajar_valor_ficha()
 
     def Verificar_limites_numeros(self):
         # Primero recopilar todos los objetos que deben eliminarse
@@ -210,7 +212,9 @@ class Predictor:
         for obj in self.no_salidos:  # Incrementar el contador de supero el limite
             self.contador.incrementar_supero_limite(obj.jugado)
 
-    # Actualiza el DataFrame con el número ingresado y los resultados de las predicciones.
+        if len(self.no_salidos) > 0:  # si perdio se actualiza el valor
+            self.Parametro_juego.aumentar_valor_ficha()
+
     def actualizar_dataframe(self, numero_ingresado):
         self.df_nuevo.loc[len(self.df_nuevo) + 1, "Salidos"] = numero_ingresado
 
@@ -250,6 +254,7 @@ class Predictor:
         print(f"Aciertos Totales: {self.contador.aciertos_totales}")
         print(f"Sin salir: {self.contador.Sin_salir_nada}")
         print(f"Ganancia_neta: {self.contador.ganancia_neta}\n")
+        print(f" Valor de ficha: {self.Parametro_juego.valor_ficha}")
 
         for e in self.numeros_predecidos:
             print(

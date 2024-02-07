@@ -9,7 +9,7 @@ from Entity.Predictor import Predictor
 def main():
     while True:
         excel_datos = input("\nIngresa el excel de datos: ") + ".xlsx"
-        valor_ficha = int(input("Ingresa el valor de la ficha: "))
+        valor_ficha_inicial = int(input("Ingresa el valor inicial de la ficha: "))
         cantidad_vecinos = int(input("Ingresa la cantidad de vecinos: "))
         limite_juego = int(input("Ingresa el Limite de Juego: "))
         limite_pretendiente = int(input("Ingresa el Limite de Pretendiente: "))
@@ -21,7 +21,7 @@ def main():
         else:
             predictor = None
             Parametro_juego = Parametro_Juego(
-                valor_ficha,
+                valor_ficha_inicial,
                 cantidad_vecinos,
                 limite_juego,
                 limite_pretendiente,

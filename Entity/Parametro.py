@@ -17,7 +17,7 @@ class Parametro_Juego:
     # Inicializa el objeto de la clase con un nombre de archivo y crea el modelo.
     def __init__(
         self,
-        valor_apuesta,
+        valor_ficha_inicial,
         cantidad_vecinos,
         limite_juego,
         limite_pretendiente,
@@ -25,13 +25,15 @@ class Parametro_Juego:
         **kwargs
     ):
         # Parametros juegos
-        self.valor_ficha = valor_apuesta
+        self.valor_ficha_inicial = valor_ficha_inicial
+        self.valor_ficha = valor_ficha_inicial
         self.limite_pretendiente = limite_pretendiente
         self.limite_juego = limite_juego
         self.lugares_vecinos = cantidad_vecinos
         self.numerosAnteriores = 5
         self.numeros_a_predecir = 10
         self.umbral_probilidad = umbral_probabilidad
+
         # Usar kwargs para personalizar atributos adicionales
         if "numeros_a_predecir" in kwargs:
             self.numeros_a_predecir = kwargs["numeros_a_predecir"]
@@ -41,3 +43,10 @@ class Parametro_Juego:
 
         if "numerosAnteriores" in kwargs:
             self.numerosAnteriores = kwargs["numerosAnteriores"]
+
+    def aumentar_valor_ficha(self):
+        self.valor_ficha *= 2
+
+    def bajar_valor_ficha(self):
+        if self.valor_ficha > self.valor_ficha_inicial:
+            self.valor_ficha /= 2

@@ -19,7 +19,7 @@ class Numero_pretendiente:
 
 
 class Numero_jugar:
-    def __init__(self, numero, probabilidad_redondeada, valor_ficha=100, vecinos=1):
+    def __init__(self, numero, probabilidad_redondeada, valor_ficha=200, vecinos=1):
         self.numero = numero
         self.probabilidad = probabilidad_redondeada
         self.valor_ficha = valor_ficha
