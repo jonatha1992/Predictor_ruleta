@@ -2,7 +2,7 @@ import os
 import itertools
 from Entity.Contador import Contador
 from Entity.Parametro import Parametro_Juego
-from Entity.Predictor import Predictor
+from Entity.Predictor_gru import Predictor
 from Numeros_Simulacion import Simulador
 
 # Asumiendo que las definiciones de las clases Parametro_Juego y Predictor permanecen iguales

@@ -48,5 +48,4 @@ class Parametro_Juego:
         self.valor_ficha *= 2
 
     def bajar_valor_ficha(self):
-        if self.valor_ficha > self.valor_ficha_inicial:
-            self.valor_ficha /= 2
+        self.valor_ficha = self.valor_ficha_inicial

@@ -63,10 +63,7 @@ class Predictor:
 
     def verificar_pretendientes(self):
         for pretendiente in self.numeros_pretendientes:
-            if (
-                pretendiente.probabilidad >= self.Parametro_juego.umbral_probilidad
-                and pretendiente.repetido >= 1
-            ):
+            if pretendiente.probabilidad >= self.Parametro_juego.umbral_probilidad:
                 new_numero = Numero_jugar(
                     pretendiente.numero,
                     pretendiente.probabilidad,
@@ -178,8 +175,6 @@ class Predictor:
                 self.contador.incrementar_ganancias_totales(x.ganancia_neta)
                 self.Parametro_juego.bajar_valor_ficha()
 
-            self.Verificar_limites_numeros()
-
             if es_vecino1lugar:
                 self.df_nuevo.at[len(self.df_nuevo), "V1L"] = "V1L"
 
@@ -192,9 +187,10 @@ class Predictor:
             if es_vecino4lugar:
                 self.df_nuevo.at[len(self.df_nuevo), "V4L"] = "V4L"
 
+        self.Verificar_limites_numeros()
+
         if len(self.numeros_predecidos) > 0:
             self.contador.incrementar_aciertos_totales(len(self.numeros_predecidos))
-            self.Parametro_juego.bajar_valor_ficha()
 
     def Verificar_limites_numeros(self):
         objetos_a_eliminar = []
@@ -211,9 +207,6 @@ class Predictor:
 
         for obj in self.no_salidos:  # Incrementar el contador de supero el limite
             self.contador.incrementar_supero_limite(obj.jugado)
-
-        if len(self.no_salidos) > 0:  # si perdio se actualiza el valor
-            self.Parametro_juego.aumentar_valor_ficha()
 
         for x in self.numeros_pretendientes[:]:
             if x.tardancia == self.Parametro_juego.limite_pretendiente:
