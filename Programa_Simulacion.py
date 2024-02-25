@@ -13,8 +13,8 @@ class Parametro_Juego_simulacion:
         self.valores_ficha = [200]
         self.cantidad_vecinos = [0, 1, 2, 3]
         self.limites_juego = [4, 5, 6, 7, 8, 9, 10, 11, 12]
-        self.limites_pretendiente = [4, 5, 6, 7, 8, 9, 10]
-        self.umbrales_probabilidad = [100, 150, 200, 250]
+        self.limites_pretendiente = [1, 2, 3]
+        self.umbrales_probabilidad = [50, 75, 100]
 
     def obtener_todas_combinaciones(self):
         return itertools.product(
