@@ -278,7 +278,7 @@ class Predictor:
             ]  # Eliminar la última fila del DataFrame nuevo
 
             if len(self.numeros_a_jugar) > 0:
-                for key in self.numeros_a_jugar:
-                    self.numeros_a_jugar[key] -= 1
+                self.numeros_a_jugar.clear()
+                self.numeros_pretendientes.clear()
 
-        print(f"Último número borrado {ultimo}")
+        print(f"Último número {ultimo}")
