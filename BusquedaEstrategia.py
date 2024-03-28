@@ -1,7 +1,7 @@
 import pandas as pd
 
 # Asumiendo que ya tienes la ruta al archivo Excel definida y los datos cargados en `df`
-ruta_al_archivo = "Reportes_simulacion copy.xlsx"
+ruta_al_archivo = "Reportes_simulacion.xlsx"
 df = pd.read_excel(ruta_al_archivo)
 
 # Filtrar las estrategias donde la ganancia ha sido positiva
@@ -36,7 +36,7 @@ estrategias_ordenadas = estrategias_100_positivas.sort_values(
 
 # Tomar las estrategias que cumplen con los criterios
 estrategias_seleccionadas = estrategias_ordenadas.head(
-    10
+    20
 )  # Ajustar según cuántas quieras seleccionar
 
 # Guardar las estrategias seleccionadas en un nuevo archivo Excel
