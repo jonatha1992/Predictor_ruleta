@@ -41,8 +41,10 @@ class Parametro_Juego:
         if "cantidad_vecinos" in kwargs:
             self.lugares_vecinos = kwargs["cantidad_vecinos"]
 
-        if "numerosAnteriores" in kwargs:
-            self.numerosAnteriores = kwargs["numerosAnteriores"]
+        if "num_Anteriores" in kwargs:
+            self.numerosAnteriores = kwargs["num_Anteriores"]
+        if "juego" in kwargs:
+            self.juego = kwargs["juego"]
 
     def aumentar_valor_ficha(self):
         self.valor_ficha *= 2

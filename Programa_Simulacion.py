@@ -10,11 +10,12 @@ import pandas as pd
 
 class Parametro_Juego_simulacion:
     def __init__(self):
+        self.Nro_Anteriores = [3, 4, 5, 6, 7, 8, 9]
         self.valores_ficha = [200]
         self.cantidad_vecinos = [0, 1, 2, 3]
-        self.limites_juego = [1, 2, 3]
-        self.limites_pretendiente = [1, 2, 3]
-        self.umbrales_probabilidad = [50, 75, 100]
+        self.limites_juego = [1, 2, 3, 4, 5]
+        self.limites_pretendiente = [0, 1, 2, 3]
+        self.umbrales_probabilidad = [50, 70, 90, 100]
 
     def obtener_todas_combinaciones(self):
         return itertools.product(
@@ -69,30 +70,30 @@ def main():
             print("El archivo Excel no existe. No se puede instanciar el Predictor.")
             continue
 
-        for array in simulador.arrays:
+        for nombre_juego, lista_numeros in simulador.arrays.items():
             parametro_juego = Parametro_Juego(
                 valor_ficha,
                 cantidad_vecinos,
                 limite_juego,
                 limite_pretendiente,
                 umbral_probabilidad,
+                juego=nombre_juego,
             )
             predictor = Predictor(carpeta, parametro_juego)
             predictor.contador = Contador()
             predictor.Parametro_juego = parametro_juego
 
-            for numero in array:
+            for numero in lista_numeros:
                 if numero == "salir":
                     predictor.guardar_excel(False, nombre_archivo_reporte)
                     break
                 predictor.verificar_resultados(numero)
                 predictor.predecir()
             print(f"ganancia_neta_final: {predictor.contador.ganancia_neta}")
-        # Guardar resultados después de cada combinación
-        print(
-            f"Simulación completada con: VF:{parametro_juego.valor_ficha}, CV:{parametro_juego.lugares_vecinos}, LJ:{parametro_juego.limite_juego}, LP:{parametro_juego.limite_pretendiente}, P:{parametro_juego.umbral_probilidad}"
-        )
-        print(f"Ganancia: {predictor.contador.ganancia_neta}\n")
+            # Guardar resultados después de cada combinación
+            print(
+                f"Simulación completada con: J: {parametro_juego.juego}, VF:{parametro_juego.valor_ficha}, CV:{parametro_juego.lugares_vecinos}, LJ:{parametro_juego.limite_juego}, LP:{parametro_juego.limite_pretendiente}, P:{parametro_juego.umbral_probilidad} , G: {predictor.contador.ganancia_neta}"
+            )
 
     print("Finalizo la simulacion de todas las combinaciones")
     os.system("start excel Reportes.xlsx")

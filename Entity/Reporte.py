@@ -8,12 +8,19 @@ class Reporte:
         pass
 
     def generar_reporte(
-        self, contador, hiperparametros, Parametro_Juego, filename, filename_reporte
+        self,
+        contador,
+        hiperparametros,
+        Parametro_Juego,
+        filename,
+        filename_reporte,
     ):
+        juego = Parametro_Juego.juego if Parametro_Juego.juego else "No es Simulación"
         fecha_hora_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         # Crear un diccionario con los datos
         datos = {
+            "Juego": juego,
             "Juego fecha y hora": fecha_hora_actual,
             "Numeros jugados": contador.jugados,
             "Aciertos Totales": contador.aciertos_totales,
