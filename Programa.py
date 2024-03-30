@@ -3,12 +3,12 @@ import os
 from Entity.Parametro import Parametro_Juego
 
 # from Entity.Predictor import Predictor
-from Entity.Predictor import Predictor
+from Entity.Predictor_LSTM import Predictor
 
 
 def main():
     while True:
-        excel_datos = input("\nIngresa el excel de datos: ") + ".xlsx"
+        excel_datos = (input("\nIngresa el excel de datos: ") + ".xlsx").lower()
         valor_ficha_inicial = int(input("Ingresa el valor inicial de la ficha: "))
         cantidad_vecinos = int(input("Ingresa la cantidad de vecinos: "))
         limite_juego = int(input("Ingresa el Limite de Juego: "))

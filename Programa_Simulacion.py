@@ -10,7 +10,6 @@ import pandas as pd
 
 class Parametro_Juego_simulacion:
     def __init__(self):
-        self.Nro_Anteriores = [3, 4, 5, 6, 7, 8, 9]
         self.valores_ficha = [200]
         self.cantidad_vecinos = [0, 1, 2, 3]
         self.limites_juego = [1, 2, 3, 4, 5]

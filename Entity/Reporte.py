@@ -15,9 +15,10 @@ class Reporte:
         filename,
         filename_reporte,
     ):
-        juego = Parametro_Juego.juego if Parametro_Juego.juego else "No es Simulación"
         fecha_hora_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        juego = getattr(Parametro_Juego, "juego", "No es Simulación")
 
+        # juego = Parametro_Juego.juego if Parametro_Juego.juego else "No es Simulación"
         # Crear un diccionario con los datos
         datos = {
             "Juego": juego,
