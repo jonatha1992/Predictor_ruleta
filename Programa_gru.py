@@ -1,8 +1,5 @@
-# Función principal que ejecuta el programa.
 import os
 from Entity.Parametro import Parametro_Juego
-
-# from Entity.Predictor import Predictor
 from Entity.Predictor_gru import Predictor
 
 
