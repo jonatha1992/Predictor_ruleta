@@ -3,7 +3,7 @@ import pandas as pd
 import tensorflow as tf
 import os
 from Entity.Contador import Contador
-from Entity.Modelo import Modelo
+from Entity.Modelo_BI import Modelo
 from Entity.Numero import Numero_pretendiente, Numero_jugar
 from datetime import datetime
 from Entity.Parametro import HiperParametros, Parametro_Juego

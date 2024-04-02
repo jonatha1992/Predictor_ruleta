@@ -5,7 +5,7 @@ import os
 from Entity.Contador import Contador
 
 # from Entity.Modelo import Modelo
-from Entity.Modelo_Gru import Modelo
+from Entity.Modelo_GRU import Modelo
 from Entity.Numero import Numero_pretendiente, Numero_jugar
 from datetime import datetime
 from Entity.Parametro import HiperParametros, Parametro_Juego
