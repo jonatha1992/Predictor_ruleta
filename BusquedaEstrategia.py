@@ -2,8 +2,8 @@ import pandas as pd
 import os
 
 # Asumiendo que ya tienes la ruta al archivo Excel definida y los datos cargados en `df`
-# ruta_al_archivo = "Reportes_simulacion_GRU.xlsx"
-# excel_salida = "Estrategias_Optimas_GRU.xlsx"
+ruta_al_archivo = "Reportes_simulacion_GRU.xlsx"
+excel_salida = "Estrategias_Optimas_GRU.xlsx"
 ruta_al_archivo = "Reportes_simulacion_LSTM.xlsx"
 excel_salida = "Estrategias_Optimas_LSTM.xlsx"
 df = pd.read_excel(ruta_al_archivo)
