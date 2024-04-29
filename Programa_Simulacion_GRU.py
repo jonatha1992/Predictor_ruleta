@@ -12,7 +12,7 @@ class Parametro_Juego_simulacion:
     def __init__(self):
         self.valores_ficha = [200]
         self.cantidad_vecinos = [0, 1, 2, 3]
-        self.limites_juego = [1, 2, 3, 4, 5]
+        self.limites_juego = [1, 2, 3, 4, 5, 6, 7]
         self.limites_pretendiente = [0, 1]
         self.umbrales_probabilidad = [50, 70, 90, 100]
 

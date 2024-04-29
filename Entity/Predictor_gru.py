@@ -284,6 +284,6 @@ class Predictor:
 
             if len(self.numeros_a_jugar) > 0:
                 for key in self.numeros_a_jugar:
-                    self.numeros_a_jugar[key] -= 1
+                    self.numeros_a_jugar.clear()
 
         print(f"Último número borrado {ultimo}")

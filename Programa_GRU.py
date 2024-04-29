@@ -10,7 +10,7 @@ def main():
         cantidad_vecinos = int(input("Ingresa la cantidad de vecinos: "))
         limite_juego = int(input("Ingresa el Limite de Juego: "))
         limite_pretendiente = int(input("Ingresa el Limite de Pretendiente: "))
-        umbral_probabilidad = int(input("Ingresa el umbral de Probilidad: "))
+        umbral_probabilidad = int(input("Ingresa el umbral de Probabilidad: "))
         carpeta = "Data/" + excel_datos
 
         if not os.path.exists(carpeta):
