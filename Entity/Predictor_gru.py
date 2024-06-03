@@ -27,8 +27,7 @@ class Predictor:
         Modelo(self.filename, self.hiperparametros)
         self.reporte = Reporte()
         self.filebasename = os.path.splitext(os.path.basename(filename))[0]
-        self.model = load_model("./Models/Model_gru" + self.filebasename)
-
+        self.model = load_model("./Models/Model_gru_" + self.filebasename)
         self.numeros_a_jugar = list()
         self.numeros_pretendientes = list()
         self.numeros_predecidos = list()

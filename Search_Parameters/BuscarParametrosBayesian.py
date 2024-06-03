@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import os 
+import os
 from keras.models import Sequential
 from keras.layers import LSTM, Dropout, Dense, BatchNormalization
 from keras.optimizers import Adam
@@ -19,12 +19,10 @@ class HyperparameterTuner:
             return
         self.numeros = self.df["Salidos"].values.tolist()
 
-        self.length_values = [ 5,6,7,8]
+        self.length_values = [5, 6, 7, 8]
         self.l2_lambda_values = [0.001, 0.002, 0.003]
         self.dropout_rate_values = [0.02, 0.01, 0.03, 0.04, 0.05]
         self.learning_rate_values = [0.001, 0.002, 0.003, 0.005]
-
-    
 
     def build_model(self, hp, length):
         model = Sequential()
@@ -85,7 +83,7 @@ class HyperparameterTuner:
             tuner = BayesianOptimization(
                 lambda hp: self.build_model(hp, length),
                 objective="val_accuracy",
-                max_trials=200,
+                max_trials=50,
                 directory=f"bayesian_optimization_length_{length}",
                 project_name=f"Bayesian_Optimizer_length_{length}",
             )
