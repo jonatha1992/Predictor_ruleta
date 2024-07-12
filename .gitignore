@@ -1,6 +1,4 @@
 random_search/
 grid_search/
-bayesian_optimization_length_5/
-bayesian_optimization_length_6/
-bayesian_optimization_length_7/
-bayesian_optimization_length_8/
+ramdom_search/
+best_models/
