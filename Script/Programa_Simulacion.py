@@ -3,7 +3,7 @@ import itertools
 from Entity.Contador import Contador
 from Entity.Parametro import Parametro_Juego
 from Entity.Predictor import Predictor
-from Numeros_Simulacion import Simulador
+from Script.Numeros_Simulacion import Simulador
 
 import pandas as pd
 

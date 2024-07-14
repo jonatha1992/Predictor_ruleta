@@ -1,4 +1,5 @@
 random_search/
 grid_search/
 ramdom_search/
+.venv/
 best_models/
