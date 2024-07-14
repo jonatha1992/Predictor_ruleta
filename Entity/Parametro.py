@@ -3,9 +3,9 @@ class HiperParametros:
     def __init__(self, cantidad):
         # hiperparamtros
         self.numerosAnteriores = 9
-        self.gru1 = 416
-        self.gru2 = 256
-        self.gru3 = 96
+        self.gru1 = 320
+        self.gru2 = 128
+        self.gru3 = 128
         self.l2_lambda = 0.001
         self.dropout_rate = 0.05
         self.learning_rate = 0.003
