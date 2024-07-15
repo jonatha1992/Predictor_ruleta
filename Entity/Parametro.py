@@ -30,7 +30,7 @@ class Parametro_Juego:
         self.limite_pretendiente = limite_pretendiente
         self.limite_juego = limite_juego
         self.lugares_vecinos = cantidad_vecinos
-        self.numerosAnteriores = 9
+        self.numerosAnteriores = 6
         self.numeros_a_predecir = 10
         self.umbral_probilidad = umbral_probabilidad
 
