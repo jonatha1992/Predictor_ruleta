@@ -30,23 +30,35 @@ class RuletaPredictorGUI:
         )
 
         parameters = [
-            ("Valor ficha inicial:", "valor_ficha_inicial", ""),
+            (
+                "Valor ficha inicial:",
+                "valor_ficha_inicial",
+                "Valor entre (1-1000)",
+                "1000",
+            ),
             (
                 "Cantidad de vecinos:",
                 "cantidad_vecinos",
                 "Valores entre (1-4) (0 = sin vecinos)",
+                "3",
             ),
-            ("Límite de juego:", "limite_juego", "Valores entre (1 al 5) "),
-            ("Límite de pretendiente:", "limite_pretendiente", "Valores entre (1-5)"),
+            ("Límite de juego:", "limite_juego", "Valores entre (1 al 5) ", "5"),
+            (
+                "Límite de pretendiente:",
+                "limite_pretendiente",
+                "Valores entre (1-5)",
+                "1",
+            ),
             (
                 "Umbral de probabilidad:",
                 "umbral_probabilidad",
                 "Valores entre (20-100)",
+                "50",
             ),
         ]
 
         self.param_entries = {}
-        for i, (label, key, restriction) in enumerate(parameters):
+        for i, (label, key, restriction, value) in enumerate(parameters):
             ttk.Label(input_frame, text=label).grid(
                 row=i + 1, column=0, sticky="w", padx=5, pady=5
             )
@@ -54,10 +66,10 @@ class RuletaPredictorGUI:
             self.param_entries[key].grid(
                 row=i + 1, column=1, sticky="w", padx=5, pady=5
             )
+            self.param_entries[key].insert(0, value)  # Establecer el valor inicial
             ttk.Label(input_frame, text=restriction).grid(
                 row=i + 1, column=2, sticky="w", padx=5, pady=5
             )
-
         ttk.Button(
             input_frame, text="Iniciar Predictor", command=self.iniciar_predictor
         ).grid(row=len(parameters) + 1, column=1, pady=10)
@@ -85,8 +97,10 @@ class RuletaPredictorGUI:
     def browse_file(self):
         filename = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx")])
         if filename:
+            # Obtener solo el nombre del archivo
+            base_name = os.path.basename(filename)
             self.excel_entry.delete(0, tk.END)
-            self.excel_entry.insert(0, filename)
+            self.excel_entry.insert(0, base_name)
 
     def iniciar_predictor(self):
         try:
@@ -96,29 +110,32 @@ class RuletaPredictorGUI:
 
             params = {}
             for key, entry in self.param_entries.items():
-                value = int(entry.get())
-                if key == "valor_ficha_inicial" and value <= 0:
-                    raise ValueError(
-                        "El valor de ficha inicial debe ser un entero positivo."
-                    )
-                elif key == "cantidad_vecinos" and not (1 <= value <= 4):
-                    raise ValueError("La cantidad de vecinos debe estar entre 1 y 4.")
-                elif key == "limite_juego" and not (500 <= value <= 100000):
-                    raise ValueError(
-                        "El límite de juego debe estar entre 500 y 100000."
-                    )
-                elif key == "limite_pretendiente" and not (5 <= value <= 20):
-                    raise ValueError(
-                        "El límite de pretendiente debe estar entre 5 y 20."
-                    )
-                elif key == "umbral_probabilidad" and not (1 <= value <= 100):
-                    raise ValueError(
-                        "El umbral de probabilidad debe estar entre 1 y 100."
-                    )
-                params[key] = value
+                try:
+                    value = int(entry.get())
+                    if key == "valor_ficha_inicial" and not value > 0:
+                        raise ValueError(
+                            "El valor de ficha inicial debe ser un entero positivo."
+                        )
+                    elif key == "cantidad_vecinos" and not (0 <= value <= 4):
+                        raise ValueError(
+                            "La cantidad de vecinos debe estar entre 0 y 4."
+                        )
+                    elif key == "limite_juego" and not (1 <= value <= 5):
+                        raise ValueError("El límite de juego debe estar entre 1 y 5.")
+                    elif key == "limite_pretendiente" and not (1 <= value <= 5):
+                        raise ValueError(
+                            "El límite de pretendiente debe estar entre 1 y 5."
+                        )
+                    elif key == "umbral_probabilidad" and not (20 <= value <= 100):
+                        raise ValueError(
+                            "El umbral de probabilidad debe estar entre 20 y 100."
+                        )
+                    params[key] = value
+                except ValueError as e:
+                    messagebox.showerror("Error de entrada", str(e))
+                    return None
 
             parametros_juego = Parametro_Juego(**params)
-
             self.predictor = Predictor(excel_file, parametros_juego)
             self.result_text.insert(tk.END, "Predictor iniciado correctamente.\n")
         except ValueError as e:
