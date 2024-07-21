@@ -11,7 +11,7 @@ class RuletaPredictorGUI:
         self.master = master
         self.master.title("Predictor de Ruleta")
         self.master.geometry("800x600")
-
+        self.filename = "bombay1.xlsx"
         self.predictor = None
         self.create_widgets()
 
@@ -80,6 +80,7 @@ class RuletaPredictorGUI:
 
         self.number_entry = ttk.Entry(input_number_frame, width=10)
         self.number_entry.pack(side="left", padx=5, pady=5)
+        self.number_entry.bind("<Return>", self.predict_number)
         ttk.Button(
             input_number_frame, text="Predecir", command=self.predict_number
         ).pack(side="left", padx=5, pady=5)
@@ -101,13 +102,17 @@ class RuletaPredictorGUI:
             base_name = os.path.basename(filename)
             self.excel_entry.delete(0, tk.END)
             self.excel_entry.insert(0, base_name)
+            self.full_file_path = filename
 
     def iniciar_predictor(self):
         try:
             excel_file = self.excel_entry.get()
             if not excel_file.endswith(".xlsx"):
                 excel_file += ".xlsx"
-
+            if hasattr(self, "full_file_path"):
+                excel_file = self.full_file_path
+            else:
+                excel_file = os.path.join(os.getcwd(), excel_file)
             params = {}
             for key, entry in self.param_entries.items():
                 try:
@@ -143,7 +148,7 @@ class RuletaPredictorGUI:
         except Exception as e:
             messagebox.showerror("Error", str(e))
 
-    def predict_number(self):
+    def predict_number(self, event=None):
         if not self.predictor:
             messagebox.showerror("Error", "Primero debes iniciar el predictor.")
             return
@@ -156,11 +161,14 @@ class RuletaPredictorGUI:
                 self.predictor.actualizar_dataframe(number)
                 resultados = self.predictor.mostrar_resultados()
                 self.result_text.insert(tk.END, f"Número ingresado: {number}\n")
-                self.result_text.insert(tk.END, resultados + "\n")
+                self.number_entry.delete(0, tk.END)
+                self.result_text.insert(tk.END, str(resultados) + "\n")
             else:
                 messagebox.showerror("Error", "El número debe estar entre 0 y 36.")
         except ValueError:
             messagebox.showerror("Error", "Por favor, ingresa un número válido.")
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
 
     def delete_last(self):
         if self.predictor:
