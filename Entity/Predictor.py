@@ -3,19 +3,15 @@ import pandas as pd
 import tensorflow as tf
 import os
 from Entity.Contador import Contador
-
-# from Entity.Modelo import Modelo
 from Entity.Modelo import Modelo
 from Entity.Numero import Numero_pretendiente, Numero_jugar
 from datetime import datetime
 from Entity.Parametro import HiperParametros, Parametro_Juego
 from Entity.Vecinos import vecino1lugar, vecino2lugar, vecinos3lugar, Vecino4lugar
-from tensorflow.keras.models import load_model
 from Entity.Reporte import Reporte
 
 
 class Predictor:
-    # Inicializa el objeto de la clase con un nombre de archivo y crea el modelo.
     def __init__(self, filename, Parametro_Juego):
         self.filename = filename
         self.Parametro_juego = Parametro_Juego
@@ -27,7 +23,9 @@ class Predictor:
         Modelo(self.filename, self.hiperparametros)
         self.reporte = Reporte()
         self.filebasename = os.path.splitext(os.path.basename(filename))[0]
-        self.model = load_model("./Models/Model_gru_" + self.filebasename)
+        self.model = tf.keras.models.load_model(
+            "./Models/Model_" + self.filebasename + ".keras"
+        )
         self.numeros_a_jugar = list()
         self.numeros_pretendientes = list()
         self.numeros_predecidos = list()
@@ -249,7 +247,32 @@ class Predictor:
             self.df_nuevo.to_excel(self.filename, sheet_name="Salidos", index=False)
 
     # Muestra los resultados y las estadísticas.
+    # def mostrar_resultados(self):
+    #     print("\nTabla de resultados:")
+    #     print(self.df_nuevo.iloc[-3:, :5])
+    #     print(f"Numeros Jugados: {self.contador.jugados}")
+    #     print(f"Aciertos Totales: {self.contador.aciertos_totales}")
+    #     print(f"Sin salir: {self.contador.Sin_salir_nada}")
+    #     print(f"Ganancia_neta: {self.contador.ganancia_neta}\n")
+    #     print(f" Valor de ficha: {self.Parametro_juego.valor_ficha}")
+
+    #     for e in self.numeros_predecidos:
+    #         print(
+    #             f"El Número {e.numero} fue ACERTADO de la lista de predecidos ganancia neta {e.ganancia_neta}."
+    #         )
+
+    #     if len(self.no_salidos) > 0:
+    #         for e in self.no_salidos:
+    #             print(f"El Número {e.numero} NO SALIO, SE PERDIO {e.jugado} .")
+
+    #     if len(self.numeros_a_jugar) > 0:
+    #         print("\nLas posibles predicciones para el próximo número son:")
+    #         for x in self.numeros_a_jugar:
+    #             print(x)
+
     def mostrar_resultados(self):
+        resultados = []
+
         print("\nTabla de resultados:")
         print(self.df_nuevo.iloc[-3:, :5])
         print(f"Numeros Jugados: {self.contador.jugados}")
@@ -259,18 +282,22 @@ class Predictor:
         print(f" Valor de ficha: {self.Parametro_juego.valor_ficha}")
 
         for e in self.numeros_predecidos:
-            print(
-                f"El Número {e.numero} fue ACERTADO de la lista de predecidos ganancia neta {e.ganancia_neta}."
+            resultados.append(
+                f"El Número {e.numero} fue ACERTADO de la lista de predecidos ganancia neta {e.ganancia_neta}."
             )
 
         if len(self.no_salidos) > 0:
             for e in self.no_salidos:
-                print(f"El Número {e.numero} NO SALIO, SE PERDIO {e.jugado} .")
+                resultados.append(
+                    f"El Número {e.numero} NO SALIO, SE PERDIO {e.jugado}."
+                )
 
         if len(self.numeros_a_jugar) > 0:
-            print("\nLas posibles predicciones para el próximo número son:")
+            resultados.append("\nLas posibles predicciones para el próximo número son:")
             for x in self.numeros_a_jugar:
-                print(x)
+                resultados.append(str(x))
+
+        return "\n".join(resultados)
 
     # Borra el último número ingresado y actualiza el contador.
     def borrar(self):

@@ -4,18 +4,6 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 import os
-from tensorflow.keras.layers import (
-    Dense,
-    Dropout,
-    GRU,
-    BatchNormalization,
-)
-from tensorflow.keras.models import Sequential, load_model
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-from tensorflow.keras.utils import to_categorical
-from tensorflow.keras.regularizers import l2
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
 
 
 class Modelo:
@@ -23,20 +11,21 @@ class Modelo:
         self.filename = filename
         self.foldername = os.path.dirname(filename)
         self.filebasename = os.path.splitext(os.path.basename(filename))[0]
-        self.nombreModelo = "Model_gru_" + self.filebasename
+        self.nombreModelo = "Model_" + self.filebasename
         self.df = pd.read_excel(filename, sheet_name="Salidos")
         self.numeros = self.df["Salidos"].values.tolist()
         self.hiperparametros = hiperparametro
 
-        modelo_path = "./Models/" + self.nombreModelo
+        modelo_path = "./Models/" + self.nombreModelo + ".keras"
 
-        if os.path.exists(modelo_path):
-            self.model = load_model(modelo_path)
-        else:
+        try:
+            self.model = tf.keras.models.load_model(modelo_path)
+            print("Modelo cargado exitosamente.")
+        except:
+            print("No se pudo cargar el modelo existente. Creando uno nuevo.")
             self.model = self._crear_modelo()
             self.guardar_modelo()
 
-        # Evaluar el modelo después de crearlo
         self.evaluar_modelo()
 
     def _crear_modelo(self):
@@ -45,49 +34,57 @@ class Modelo:
             secuencias, siguientes_numeros, test_size=0.2
         )
 
-        model = Sequential()
-        model.add(
-            GRU(
-                self.hiperparametros.gru1,
-                input_shape=(self.hiperparametros.numerosAnteriores, 1),
-                return_sequences=True,
-                kernel_regularizer=l2(self.hiperparametros.l2_lambda),
-            )
+        model = tf.keras.Sequential(
+            [
+                tf.keras.layers.GRU(
+                    self.hiperparametros.gru1,
+                    input_shape=(self.hiperparametros.numerosAnteriores, 1),
+                    return_sequences=True,
+                    kernel_regularizer=tf.keras.regularizers.l2(
+                        self.hiperparametros.l2_lambda
+                    ),
+                ),
+                tf.keras.layers.BatchNormalization(),
+                tf.keras.layers.Dropout(self.hiperparametros.dropout_rate),
+                tf.keras.layers.GRU(
+                    self.hiperparametros.gru2,
+                    return_sequences=True,
+                    kernel_regularizer=tf.keras.regularizers.l2(
+                        self.hiperparametros.l2_lambda
+                    ),
+                ),
+                tf.keras.layers.BatchNormalization(),
+                tf.keras.layers.Dropout(self.hiperparametros.dropout_rate),
+                tf.keras.layers.GRU(
+                    self.hiperparametros.gru3,
+                    kernel_regularizer=tf.keras.regularizers.l2(
+                        self.hiperparametros.l2_lambda
+                    ),
+                ),
+                tf.keras.layers.BatchNormalization(),
+                tf.keras.layers.Dropout(self.hiperparametros.dropout_rate),
+                tf.keras.layers.Dense(37, activation="softmax"),
+            ]
         )
-        model.add(BatchNormalization())
-        model.add(Dropout(self.hiperparametros.dropout_rate))
-        model.add(
-            GRU(
-                self.hiperparametros.gru2,
-                return_sequences=True,
-                kernel_regularizer=l2(self.hiperparametros.l2_lambda),
-            )
-        )
-        model.add(BatchNormalization())
-        model.add(Dropout(self.hiperparametros.dropout_rate))
-        model.add(
-            GRU(
-                self.hiperparametros.gru3,
-                kernel_regularizer=l2(self.hiperparametros.l2_lambda),
-            )
-        )
-        model.add(BatchNormalization())
-        model.add(Dropout(self.hiperparametros.dropout_rate))
-        model.add(Dense(37, activation="softmax"))
 
-        optimizer = Adam(learning_rate=self.hiperparametros.learning_rate)
+        optimizer = tf.keras.optimizers.Adam(
+            learning_rate=self.hiperparametros.learning_rate
+        )
         model.compile(
             loss="categorical_crossentropy", optimizer=optimizer, metrics=["accuracy"]
         )
 
-        early_stopping = EarlyStopping(monitor="val_loss", patience=20)
-        reduce_lr = ReduceLROnPlateau(
+        early_stopping = tf.keras.callbacks.EarlyStopping(
+            monitor="val_loss", patience=20
+        )
+        reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(
             monitor="val_loss", factor=0.5, patience=10, min_lr=1e-6
         )
-        model_checkpoint = ModelCheckpoint(
-            filepath="./Models/best_model.h5", save_best_only=True, monitor="val_loss"
+        model_checkpoint = tf.keras.callbacks.ModelCheckpoint(
+            filepath="./Models/best_model.keras",
+            save_best_only=True,
+            monitor="val_loss",
         )
-
         model.fit(
             X_train,
             y_train,
@@ -111,13 +108,14 @@ class Modelo:
             siguientes_numeros.append(
                 self.numeros[i + self.hiperparametros.numerosAnteriores]
             )
-        secuencias = pad_sequences(np.array(secuencias))
-        siguientes_numeros = to_categorical(np.array(siguientes_numeros))
+        secuencias = tf.keras.preprocessing.sequence.pad_sequences(np.array(secuencias))
+        siguientes_numeros = tf.keras.utils.to_categorical(np.array(siguientes_numeros))
         return secuencias, siguientes_numeros
 
     def guardar_modelo(self):
-        modelo_path = "Models/" + self.nombreModelo
-        self.model.save(modelo_path)
+        modelo_path = "Models/" + self.nombreModelo + ".keras"
+        tf.keras.models.save_model(self.model, modelo_path)
+        print(f"Modelo guardado en {modelo_path}")
 
     def evaluar_modelo(self):
         secuencias, siguientes_numeros = self._crear_secuencias()

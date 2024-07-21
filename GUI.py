@@ -53,7 +53,7 @@ class RuletaPredictorGUI:
                 "Umbral de probabilidad:",
                 "umbral_probabilidad",
                 "Valores entre (20-100)",
-                "50",
+                "20",
             ),
         ]
 
@@ -88,12 +88,57 @@ class RuletaPredictorGUI:
             input_number_frame, text="Borrar último", command=self.delete_last
         ).pack(side="left", padx=5, pady=5)
 
-        # Área de resultados
-        result_frame = ttk.LabelFrame(self.master, text="Resultados")
-        result_frame.pack(padx=10, pady=10, fill="both", expand=True)
+        self.numeros_salidos_frame = ttk.LabelFrame(self.master, text="Números Salidos")
+        self.numeros_salidos_frame.pack(padx=10, pady=5, fill="x")
 
-        self.result_text = tk.Text(result_frame, height=10)
+        self.numeros_salidos_label = ttk.Label(
+            self.numeros_salidos_frame, text="", wraplength=780
+        )
+        self.numeros_salidos_label.pack(padx=5, pady=5, fill="x")
+
+        # Frame principal para resultados y estadísticas
+        main_frame = ttk.Frame(self.master)
+        main_frame.pack(padx=10, pady=10, fill="both", expand=True)
+
+        # Área de resultados (mitad izquierda)
+        result_frame = ttk.LabelFrame(main_frame, text="Resultados")
+        result_frame.pack(side="left", padx=(0, 5), fill="both", expand=True)
+
+        # Crear un widget Scrollbar para el área de resultados
+        scrollbar = ttk.Scrollbar(result_frame)
+        scrollbar.pack(side="right", fill="y")
+
+        self.result_text = tk.Text(
+            result_frame, height=10, yscrollcommand=scrollbar.set
+        )
         self.result_text.pack(padx=5, pady=5, fill="both", expand=True)
+        scrollbar.config(command=self.result_text.yview)
+
+        # Tabla de estadísticas (mitad derecha)
+        stats_frame = ttk.LabelFrame(main_frame, text="Estadísticas de Juego")
+        stats_frame.pack(side="right", padx=(5, 0), fill="both", expand=True)
+
+        self.stats_tree = ttk.Treeview(
+            stats_frame, columns=("Estadística", "Valor"), show="headings", height=6
+        )
+        self.stats_tree.heading("Estadística", text="Estadística")
+        self.stats_tree.heading("Valor", text="Valor")
+        self.stats_tree.column("Estadística", width=150, anchor="w")
+        self.stats_tree.column("Valor", width=100, anchor="center")
+        self.stats_tree.pack(fill="both", expand=True)
+
+        # Inicializar la tabla con filas vacías
+        stats = [
+            "Números Jugados",
+            "Aciertos Totales",
+            "Sin salir",
+            "Ganancia Neta",
+            "Valor de Ficha",
+            "Predicciones",
+        ]
+        for stat in stats:
+            self.stats_tree.insert("", "end", values=(stat, ""))
+            # Área de resultados
 
     def browse_file(self):
         filename = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx")])
@@ -162,7 +207,10 @@ class RuletaPredictorGUI:
                 resultados = self.predictor.mostrar_resultados()
                 self.result_text.insert(tk.END, f"Número ingresado: {number}\n")
                 self.number_entry.delete(0, tk.END)
-                self.result_text.insert(tk.END, str(resultados) + "\n")
+                if resultados != None:
+                    self.result_text.insert(tk.END, str(resultados) + "\n")
+
+                self.result_text.see(tk.END)
             else:
                 messagebox.showerror("Error", "El número debe estar entre 0 y 36.")
         except ValueError:
