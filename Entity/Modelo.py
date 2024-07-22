@@ -30,6 +30,7 @@ class Modelo:
 
     def _crear_modelo(self):
         secuencias, siguientes_numeros = self._crear_secuencias()
+
         X_train, X_val, y_train, y_val = train_test_split(
             secuencias, siguientes_numeros, test_size=0.2
         )
@@ -71,14 +72,16 @@ class Modelo:
             learning_rate=self.hiperparametros.learning_rate
         )
         model.compile(
-            loss="categorical_crossentropy", optimizer=optimizer, metrics=["accuracy"]
+            loss="categorical_crossentropy",
+            optimizer=optimizer,
+            metrics=["accuracy"],
         )
 
         early_stopping = tf.keras.callbacks.EarlyStopping(
             monitor="val_loss", patience=20
         )
         reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(
-            monitor="val_loss", factor=0.5, patience=10, min_lr=1e-6
+            monitor="val_loss", factor=0.5, patience=20, min_lr=1e-6
         )
         model_checkpoint = tf.keras.callbacks.ModelCheckpoint(
             filepath="./Models/best_model.keras",

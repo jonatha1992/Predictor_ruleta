@@ -1,9 +1,8 @@
 import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
-import pandas as pd
-from Entity.Predictor import Predictor
-from Entity.Parametro import Parametro_Juego, HiperParametros
+from tkinter import ttk, messagebox
 import os
+from Entity.Predictor import Predictor
+from Entity.Parametro import Parametro_Juego
 
 
 class RuletaPredictorGUI:
@@ -11,7 +10,6 @@ class RuletaPredictorGUI:
         self.master = master
         self.master.title("Predictor de Ruleta")
         self.master.geometry("800x600")
-        self.filename = "bombay1.xlsx"
         self.predictor = None
         self.create_widgets()
 
@@ -20,14 +18,16 @@ class RuletaPredictorGUI:
         input_frame = ttk.LabelFrame(self.master, text="Parámetros de entrada")
         input_frame.pack(padx=10, pady=10, fill="x")
 
-        ttk.Label(input_frame, text="Archivo Excel:").grid(
+        ttk.Label(input_frame, text="Tipo de Ruleta:").grid(
             row=0, column=0, sticky="w", padx=5, pady=5
         )
-        self.excel_entry = ttk.Entry(input_frame, width=40)
-        self.excel_entry.grid(row=0, column=1, padx=5, pady=5)
-        ttk.Button(input_frame, text="Buscar", command=self.browse_file).grid(
-            row=0, column=2, padx=5, pady=5
+        self.ruleta_type = ttk.Combobox(
+            input_frame,
+            values=["Electromecánica", "Electrónica", "Crupier"],
+            state="readonly",
         )
+        self.ruleta_type.grid(row=0, column=1, padx=5, pady=5)
+        self.ruleta_type.set("Electromecánica")
 
         parameters = [
             (
@@ -141,24 +141,9 @@ class RuletaPredictorGUI:
         for stat in stats:
             self.stats_tree.insert("", "end", values=(stat, ""))
 
-    def browse_file(self):
-        filename = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx")])
-        if filename:
-            # Obtener solo el nombre del archivo
-            base_name = os.path.basename(filename)
-            self.excel_entry.delete(0, tk.END)
-            self.excel_entry.insert(0, base_name)
-            self.full_file_path = filename
-
     def iniciar_predictor(self):
         try:
-            excel_file = self.excel_entry.get()
-            if not excel_file.endswith(".xlsx"):
-                excel_file += ".xlsx"
-            if hasattr(self, "full_file_path"):
-                excel_file = self.full_file_path
-            else:
-                excel_file = os.path.join(os.getcwd(), excel_file)
+            ruleta_tipo = self.ruleta_type.get()
             params = {}
             for key, entry in self.param_entries.items():
                 try:
@@ -187,12 +172,35 @@ class RuletaPredictorGUI:
                     return None
 
             parametros_juego = Parametro_Juego(**params)
+
+            # Determinar el archivo Excel basado en el tipo de ruleta
+            if ruleta_tipo == "Electromecánica":
+                excel_file = "./Data/Electromecanica.xlsx"
+            elif ruleta_tipo == "Electrónica":
+                excel_file = "./Data/Electronica.xlsx"
+            elif ruleta_tipo == "Crupier":
+                excel_file = "./Data/Crupier.xlsx"
+            else:
+                raise ValueError("Tipo de ruleta no válido")
+
+            # Verificar si el archivo existe
+            if not os.path.exists(excel_file):
+                raise FileNotFoundError(f"El archivo {excel_file} no se encuentra.")
+
             self.predictor = Predictor(excel_file, parametros_juego)
-            self.result_text.insert(tk.END, "Predictor iniciado correctamente.\n")
+            self.result_text.insert(
+                tk.END, f"Predictor iniciado correctamente para ruleta {ruleta_tipo}.\n"
+            )
+
+            # Limpiar estadísticas previas si las hubiera
+            self.limpiar_estadisticas()
+
+        except FileNotFoundError as e:
+            messagebox.showerror("Error", str(e))
         except ValueError as e:
             messagebox.showerror("Error", str(e))
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            messagebox.showerror("Error", f"Error inesperado: {str(e)}")
 
     def predict_number(self, event=None):
         if not self.predictor:
@@ -254,6 +262,7 @@ class RuletaPredictorGUI:
             self.result_text.insert(
                 tk.END, "El juego ha sido reiniciado. \n debe iniciar el predictor.\n"
             )
+            self.limpiar_estadisticas()
         else:
             self.result_text.insert(tk.END, "Reinicio cancelado.\n")
 
@@ -267,18 +276,40 @@ class RuletaPredictorGUI:
                 ("Ganancia Neta", self.predictor.contador.ganancia_neta),
             ]
 
-        # Limpiar la tabla existente
+            # Limpiar la tabla existente
+            for item in self.stats_tree.get_children():
+                self.stats_tree.delete(item)
+
+            # Insertar nuevos datos
+            for stat, value in estadisticas:
+                self.stats_tree.insert("", "end", values=(stat, value))
+
+            numeros_text = ", ".join(
+                map(str, reversed(self.predictor.contador.numeros_partida))
+            )
+            self.numeros_salidos_label.config(text=numeros_text)
+
+    def limpiar_estadisticas(self):
+        # Limpiar la tabla de estadísticas
         for item in self.stats_tree.get_children():
             self.stats_tree.delete(item)
 
-        # Insertar nuevos datos
-        for stat, value in estadisticas:
-            self.stats_tree.insert("", "end", values=(stat, value))
+        # Reinicializar con valores vacíos
+        stats = [
+            "Números ingresados",
+            "Números Predecidos",
+            "Aciertos Totales",
+            "Sin salir",
+            "Ganancia Neta",
+        ]
+        for stat in stats:
+            self.stats_tree.insert("", "end", values=(stat, ""))
 
-        numeros_text = ", ".join(
-            map(str, reversed(self.predictor.contador.numeros_partida))
-        )
-        self.numeros_salidos_label.config(text=numeros_text)
+        # Limpiar el área de resultados
+        self.result_text.delete("1.0", tk.END)
+
+        # Limpiar la etiqueta de números salidos
+        self.numeros_salidos_label.config(text="")
 
 
 if __name__ == "__main__":
