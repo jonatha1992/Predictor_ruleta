@@ -87,6 +87,9 @@ class RuletaPredictorGUI:
         ttk.Button(
             input_number_frame, text="Borrar último", command=self.delete_last
         ).pack(side="left", padx=5, pady=5)
+        ttk.Button(input_number_frame, text="Reiniciar", command=self.reset).pack(
+            side="left", padx=5, pady=5
+        )
 
         self.numeros_salidos_frame = ttk.LabelFrame(self.master, text="Números Salidos")
         self.numeros_salidos_frame.pack(padx=10, pady=5, fill="x")
@@ -109,7 +112,7 @@ class RuletaPredictorGUI:
         scrollbar.pack(side="right", fill="y")
 
         self.result_text = tk.Text(
-            result_frame, height=10, yscrollcommand=scrollbar.set
+            result_frame, width=60, height=10, yscrollcommand=scrollbar.set
         )
         self.result_text.pack(padx=5, pady=5, fill="both", expand=True)
         scrollbar.config(command=self.result_text.yview)
@@ -129,16 +132,14 @@ class RuletaPredictorGUI:
 
         # Inicializar la tabla con filas vacías
         stats = [
-            "Números Jugados",
+            "Números ingresados",
+            "Números Predecidos",
             "Aciertos Totales",
             "Sin salir",
             "Ganancia Neta",
-            "Valor de Ficha",
-            "Predicciones",
         ]
         for stat in stats:
             self.stats_tree.insert("", "end", values=(stat, ""))
-            # Área de resultados
 
     def browse_file(self):
         filename = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx")])
@@ -205,12 +206,15 @@ class RuletaPredictorGUI:
                 self.predictor.predecir()
                 self.predictor.actualizar_dataframe(number)
                 resultados = self.predictor.mostrar_resultados()
-                self.result_text.insert(tk.END, f"Número ingresado: {number}\n")
+                self.result_text.insert(tk.END, f"Número ingresado: {number}")
                 self.number_entry.delete(0, tk.END)
                 if resultados != None:
                     self.result_text.insert(tk.END, str(resultados) + "\n")
 
                 self.result_text.see(tk.END)
+
+                self.actualizar_estadisticas()
+
             else:
                 messagebox.showerror("Error", "El número debe estar entre 0 y 36.")
         except ValueError:
@@ -220,10 +224,61 @@ class RuletaPredictorGUI:
 
     def delete_last(self):
         if self.predictor:
-            self.predictor.borrar()
-            self.result_text.insert(tk.END, "Último número borrado.\n")
+            ultimo_numero = (
+                self.predictor.contador.numeros_partida[-1]
+                if self.predictor.contador.numeros_partida
+                else None
+            )
+            if ultimo_numero is not None:
+                self.result_text.insert(
+                    tk.END, f"Último número borrado: {ultimo_numero}\n"
+                )
+                self.predictor.borrar()
+                self.actualizar_estadisticas()
+
+            else:
+                self.result_text.insert(tk.END, "No hay números para borrar.\n")
         else:
             messagebox.showerror("Error", "El predictor no ha sido iniciado.")
+
+    def reset(self):
+        confirmacion = messagebox.askyesno(
+            "Confirmación",
+            "¿Estás seguro que quieres reiniciar? Se guardará el reporte actual.",
+        )
+
+        if confirmacion:
+            self.predictor.guardar_excel()
+            os.system(f"start excel Reporte_juego.xlsx")
+
+            self.result_text.insert(
+                tk.END, "El juego ha sido reiniciado. \n debe iniciar el predictor.\n"
+            )
+        else:
+            self.result_text.insert(tk.END, "Reinicio cancelado.\n")
+
+    def actualizar_estadisticas(self):
+        if self.predictor and self.predictor.contador:
+            estadisticas = [
+                ("Números Ingresados", self.predictor.contador.ingresados),
+                ("Números Predecidos", self.predictor.contador.jugados),
+                ("Aciertos Totales", self.predictor.contador.aciertos_totales),
+                ("Sin salir", self.predictor.contador.Sin_salir_nada),
+                ("Ganancia Neta", self.predictor.contador.ganancia_neta),
+            ]
+
+        # Limpiar la tabla existente
+        for item in self.stats_tree.get_children():
+            self.stats_tree.delete(item)
+
+        # Insertar nuevos datos
+        for stat, value in estadisticas:
+            self.stats_tree.insert("", "end", values=(stat, value))
+
+        numeros_text = ", ".join(
+            map(str, reversed(self.predictor.contador.numeros_partida))
+        )
+        self.numeros_salidos_label.config(text=numeros_text)
 
 
 if __name__ == "__main__":

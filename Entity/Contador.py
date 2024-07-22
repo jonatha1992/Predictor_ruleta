@@ -2,6 +2,7 @@
 class Contador:
     def __init__(self):
         self.numeros = []
+        self.numeros_partida = []
         self.acierto_predecidos = 0
         self.acierto_vecinos_1lugar = 0
         self.acierto_vecinos_2lugar = 0
@@ -28,10 +29,12 @@ class Contador:
     def incrementar_ingresados(self, numero):
         self.ingresados += 1
         self.numeros.append(numero)
+        self.numeros_partida.append(numero)
 
     def borrar_ultimo_numero(self):
         self.ingresados -= 1
         self.numeros.pop()
+        self.numeros_partida.pop()
 
         if self.ingresados > 7 or self.jugados > 0:
             self.jugados -= 1

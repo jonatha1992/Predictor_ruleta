@@ -245,8 +245,8 @@ class Predictor:
         )
         if si_guardar:
             self.df_nuevo.to_excel(self.filename, sheet_name="Salidos", index=False)
-
-    # Muestra los resultados y las estadísticas.
+    # este se usaba para mostrar por consola
+    # Muestra los resultados y las estadísticas. 
     # def mostrar_resultados(self):
     #     print("\nTabla de resultados:")
     #     print(self.df_nuevo.iloc[-3:, :5])
