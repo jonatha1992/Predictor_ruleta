@@ -58,18 +58,22 @@ class RuletaPredictorGUI:
         ]
 
         self.param_entries = {}
+        vcmd = (self.master.register(self.validate_entry), "%P")
         for i, (label, key, restriction, value) in enumerate(parameters):
             ttk.Label(input_frame, text=label).grid(
                 row=i + 1, column=0, sticky="w", padx=5, pady=5
             )
-            self.param_entries[key] = ttk.Entry(input_frame, width=10)
+            self.param_entries[key] = ttk.Entry(
+                input_frame, width=10, validate="key", validatecommand=vcmd
+            )
             self.param_entries[key].grid(
                 row=i + 1, column=1, sticky="w", padx=5, pady=5
             )
-            self.param_entries[key].insert(0, value)  # Establecer el valor inicial
+            self.param_entries[key].insert(0, value)
             ttk.Label(input_frame, text=restriction).grid(
                 row=i + 1, column=2, sticky="w", padx=5, pady=5
             )
+
         ttk.Button(
             input_frame, text="Iniciar Predictor", command=self.iniciar_predictor
         ).grid(row=len(parameters) + 1, column=1, pady=10)
@@ -78,7 +82,9 @@ class RuletaPredictorGUI:
         input_number_frame = ttk.LabelFrame(self.master, text="Ingresar nuevo número")
         input_number_frame.pack(padx=10, pady=10, fill="x")
 
-        self.number_entry = ttk.Entry(input_number_frame, width=10)
+        self.number_entry = ttk.Entry(
+            input_number_frame, width=10, validate="key", validatecommand=vcmd
+        )
         self.number_entry.pack(side="left", padx=5, pady=5)
         self.number_entry.bind("<Return>", self.predict_number)
         ttk.Button(
@@ -90,6 +96,9 @@ class RuletaPredictorGUI:
         ttk.Button(input_number_frame, text="Reiniciar", command=self.reset).pack(
             side="left", padx=5, pady=5
         )
+        ttk.Button(
+            input_number_frame, text="Guardar Numeros", command=self.guardar_numeros
+        ).pack(side="left", padx=5, pady=5)
 
         self.numeros_salidos_frame = ttk.LabelFrame(self.master, text="Números Salidos")
         self.numeros_salidos_frame.pack(padx=10, pady=5, fill="x")
@@ -107,7 +116,6 @@ class RuletaPredictorGUI:
         result_frame = ttk.LabelFrame(main_frame, text="Resultados")
         result_frame.pack(side="left", padx=(0, 5), fill="both", expand=True)
 
-        # Crear un widget Scrollbar para el área de resultados
         scrollbar = ttk.Scrollbar(result_frame)
         scrollbar.pack(side="right", fill="y")
 
@@ -126,7 +134,7 @@ class RuletaPredictorGUI:
         )
         self.stats_tree.heading("Estadística", text="Estadística")
         self.stats_tree.heading("Valor", text="Valor")
-        self.stats_tree.column("Estadística", width=150, anchor="w")
+        self.stats_tree.column("Estadística", width=130, anchor="w")
         self.stats_tree.column("Valor", width=100, anchor="center")
         self.stats_tree.pack(fill="both", expand=True)
 
@@ -141,7 +149,20 @@ class RuletaPredictorGUI:
         for stat in stats:
             self.stats_tree.insert("", "end", values=(stat, ""))
 
+    def validate_entry(self, P):
+        if P.strip() == "":
+            return True
+        try:
+            int(P)
+            return True
+        except ValueError:
+            return False
+
     def iniciar_predictor(self):
+        if not self.ruleta_type.get():
+            messagebox.showerror("Error", "Por favor, selecciona un tipo de ruleta.")
+            return
+
         try:
             ruleta_tipo = self.ruleta_type.get()
             params = {}
@@ -173,7 +194,6 @@ class RuletaPredictorGUI:
 
             parametros_juego = Parametro_Juego(**params)
 
-            # Determinar el archivo Excel basado en el tipo de ruleta
             if ruleta_tipo == "Electromecánica":
                 excel_file = "./Data/Electromecanica.xlsx"
             elif ruleta_tipo == "Electrónica":
@@ -183,17 +203,14 @@ class RuletaPredictorGUI:
             else:
                 raise ValueError("Tipo de ruleta no válido")
 
-            # Verificar si el archivo existe
             if not os.path.exists(excel_file):
                 raise FileNotFoundError(f"El archivo {excel_file} no se encuentra.")
 
             self.predictor = Predictor(excel_file, parametros_juego)
+            self.limpiar_estadisticas()
             self.result_text.insert(
                 tk.END, f"Predictor iniciado correctamente para ruleta {ruleta_tipo}.\n"
             )
-
-            # Limpiar estadísticas previas si las hubiera
-            self.limpiar_estadisticas()
 
         except FileNotFoundError as e:
             messagebox.showerror("Error", str(e))
@@ -207,8 +224,13 @@ class RuletaPredictorGUI:
             messagebox.showerror("Error", "Primero debes iniciar el predictor.")
             return
 
+        number_str = self.number_entry.get().strip()
+        if not number_str:
+            messagebox.showerror("Error", "Por favor, ingresa un número.")
+            return
+
         try:
-            number = int(self.number_entry.get())
+            number = int(number_str)
             if 0 <= number <= 36:
                 self.predictor.verificar_resultados(number)
                 self.predictor.predecir()
@@ -217,12 +239,10 @@ class RuletaPredictorGUI:
                 self.result_text.insert(tk.END, f"Número ingresado: {number}")
                 self.number_entry.delete(0, tk.END)
                 if resultados != None:
-                    self.result_text.insert(tk.END, str(resultados) + "\n")
+                    self.result_text.insert(tk.END, "\n" + str(resultados) + "\n")
 
                 self.result_text.see(tk.END)
-
                 self.actualizar_estadisticas()
-
             else:
                 messagebox.showerror("Error", "El número debe estar entre 0 y 36.")
         except ValueError:
@@ -231,40 +251,49 @@ class RuletaPredictorGUI:
             messagebox.showerror("Error", str(e))
 
     def delete_last(self):
-        if self.predictor:
-            ultimo_numero = (
-                self.predictor.contador.numeros_partida[-1]
-                if self.predictor.contador.numeros_partida
-                else None
-            )
-            if ultimo_numero is not None:
-                self.result_text.insert(
-                    tk.END, f"Último número borrado: {ultimo_numero}\n"
-                )
-                self.predictor.borrar()
-                self.actualizar_estadisticas()
-
-            else:
-                self.result_text.insert(tk.END, "No hay números para borrar.\n")
-        else:
+        if not self.predictor:
             messagebox.showerror("Error", "El predictor no ha sido iniciado.")
+            return
+
+        if not self.predictor.contador.numeros_partida:
+            messagebox.showinfo("Información", "No hay números para borrar.")
+            return
+
+        ultimo_numero = self.predictor.contador.numeros_partida[-1]
+        self.result_text.insert(tk.END, f"Último número borrado: {ultimo_numero}\n")
+        self.predictor.borrar()
+        self.actualizar_estadisticas()
 
     def reset(self):
         confirmacion = messagebox.askyesno(
-            "Confirmación",
-            "¿Estás seguro que quieres reiniciar? Se guardará el reporte actual.",
+            "Confirmación", "¿Estás seguro que quieres reiniciar?"
+        )
+
+        if confirmacion:
+            if self.predictor:
+                self.predictor.guardar_reporte()
+            self.result_text.insert(
+                tk.END, "El juego ha sido reiniciado. Debe iniciar el predictor.\n"
+            )
+            self.limpiar_estadisticas()
+            self.predictor = None
+        else:
+            self.result_text.insert(tk.END, "Reinicio cancelado.\n")
+
+    def guardar_numeros(self):
+        if not self.predictor or not self.predictor.contador.numeros_partida:
+            messagebox.showinfo("Información", "No hay números para guardar.")
+            return
+
+        confirmacion = messagebox.askyesno(
+            "Confirmación", "¿Quieres guardar los números ingresados?"
         )
 
         if confirmacion:
             self.predictor.guardar_excel()
-            os.system(f"start excel Reporte_juego.xlsx")
-
-            self.result_text.insert(
-                tk.END, "El juego ha sido reiniciado. \n debe iniciar el predictor.\n"
-            )
-            self.limpiar_estadisticas()
+            self.result_text.insert(tk.END, "Se han guardado los números ingresados.\n")
         else:
-            self.result_text.insert(tk.END, "Reinicio cancelado.\n")
+            self.result_text.insert(tk.END, "Guardado cancelado.\n")
 
     def actualizar_estadisticas(self):
         if self.predictor and self.predictor.contador:
@@ -276,11 +305,9 @@ class RuletaPredictorGUI:
                 ("Ganancia Neta", self.predictor.contador.ganancia_neta),
             ]
 
-            # Limpiar la tabla existente
             for item in self.stats_tree.get_children():
                 self.stats_tree.delete(item)
 
-            # Insertar nuevos datos
             for stat, value in estadisticas:
                 self.stats_tree.insert("", "end", values=(stat, value))
 
@@ -290,11 +317,9 @@ class RuletaPredictorGUI:
             self.numeros_salidos_label.config(text=numeros_text)
 
     def limpiar_estadisticas(self):
-        # Limpiar la tabla de estadísticas
         for item in self.stats_tree.get_children():
             self.stats_tree.delete(item)
 
-        # Reinicializar con valores vacíos
         stats = [
             "Números ingresados",
             "Números Predecidos",
@@ -305,10 +330,7 @@ class RuletaPredictorGUI:
         for stat in stats:
             self.stats_tree.insert("", "end", values=(stat, ""))
 
-        # Limpiar el área de resultados
         self.result_text.delete("1.0", tk.END)
-
-        # Limpiar la etiqueta de números salidos
         self.numeros_salidos_label.config(text="")
 
 

@@ -234,19 +234,21 @@ class Predictor:
         self.df_nuevo.loc[len(self.df_nuevo), "Pretendientes"] = pretendientes_str
 
     # Guarda el DataFrame en un archivo de Excel.
-    def guardar_excel(self, si_guardar=True, filename_reporte="Reporte_juego.xlsx"):
+    def guardar_reporte(self):
         self.contador.Calcular_ganancia()
         self.reporte.generar_reporte(
             self.contador,
             self.hiperparametros,
             self.Parametro_juego,
             self.filename,
-            filename_reporte,
+            filename_reporte="Reporte_juego.xlsx",
         )
-        if si_guardar:
-            self.df_nuevo.to_excel(self.filename, sheet_name="Salidos", index=False)
+
+    def guardar_excel(self):
+        self.df_nuevo.to_excel(self.filename, sheet_name="Salidos", index=False)
+
     # este se usaba para mostrar por consola
-    # Muestra los resultados y las estadísticas. 
+    # Muestra los resultados y las estadísticas.
     # def mostrar_resultados(self):
     #     print("\nTabla de resultados:")
     #     print(self.df_nuevo.iloc[-3:, :5])
