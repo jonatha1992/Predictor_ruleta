@@ -9,14 +9,18 @@ class RuletaPredictorGUI:
     def __init__(self, master):
         self.master = master
         self.master.title("Predictor de Ruleta")
-        self.master.geometry("800x600")
+        self.master.geometry("900x700")
         self.predictor = None
         self.create_widgets()
 
     def create_widgets(self):
-        # Frame para los parámetros de entrada
-        input_frame = ttk.LabelFrame(self.master, text="Parámetros de entrada")
-        input_frame.pack(padx=10, pady=10, fill="x")
+        # Frame principal para la parte superior (parámetros y estadísticas)
+        top_frame = ttk.Frame(self.master)
+        top_frame.pack(padx=10, pady=10, fill="x")
+
+        # Frame para los parámetros de entrada (lado izquierdo)
+        input_frame = ttk.LabelFrame(top_frame, text="Parámetros de entrada")
+        input_frame.pack(side="left", padx=(0, 5), fill="y")
 
         ttk.Label(input_frame, text="Tipo de Ruleta:").grid(
             row=0, column=0, sticky="w", padx=5, pady=5
@@ -74,59 +78,22 @@ class RuletaPredictorGUI:
                 row=i + 1, column=2, sticky="w", padx=5, pady=5
             )
 
-        ttk.Button(
-            input_frame, text="Iniciar Predictor", command=self.iniciar_predictor
-        ).grid(row=len(parameters) + 1, column=1, pady=10)
+        # Frame para los botones de control
+        control_frame = ttk.Frame(input_frame)
+        control_frame.grid(row=len(parameters) + 1, column=0, columnspan=3, pady=10)
 
-        # Frame para ingresar nuevos números
-        input_number_frame = ttk.LabelFrame(self.master, text="Ingresar nuevo número")
-        input_number_frame.pack(padx=10, pady=10, fill="x")
-
-        self.number_entry = ttk.Entry(
-            input_number_frame, width=10, validate="key", validatecommand=vcmd
+        self.iniciar_button = ttk.Button(
+            control_frame, text="Iniciar Predictor", command=self.iniciar_predictor
         )
-        self.number_entry.pack(side="left", padx=5, pady=5)
-        self.number_entry.bind("<Return>", self.predict_number)
-        ttk.Button(
-            input_number_frame, text="Predecir", command=self.predict_number
-        ).pack(side="left", padx=5, pady=5)
-        ttk.Button(
-            input_number_frame, text="Borrar último", command=self.delete_last
-        ).pack(side="left", padx=5, pady=5)
-        ttk.Button(input_number_frame, text="Reiniciar", command=self.reset).pack(
-            side="left", padx=5, pady=5
+        self.iniciar_button.pack(side="left", padx=(0, 5))
+
+        self.reiniciar_button = ttk.Button(
+            control_frame, text="Reiniciar", command=self.reset, state="disabled"
         )
-        ttk.Button(
-            input_number_frame, text="Guardar Numeros", command=self.guardar_numeros
-        ).pack(side="left", padx=5, pady=5)
+        self.reiniciar_button.pack(side="left")
 
-        self.numeros_salidos_frame = ttk.LabelFrame(self.master, text="Números Salidos")
-        self.numeros_salidos_frame.pack(padx=10, pady=5, fill="x")
-
-        self.numeros_salidos_label = ttk.Label(
-            self.numeros_salidos_frame, text="", wraplength=780
-        )
-        self.numeros_salidos_label.pack(padx=5, pady=5, fill="x")
-
-        # Frame principal para resultados y estadísticas
-        main_frame = ttk.Frame(self.master)
-        main_frame.pack(padx=10, pady=10, fill="both", expand=True)
-
-        # Área de resultados (mitad izquierda)
-        result_frame = ttk.LabelFrame(main_frame, text="Resultados")
-        result_frame.pack(side="left", padx=(0, 5), fill="both", expand=True)
-
-        scrollbar = ttk.Scrollbar(result_frame)
-        scrollbar.pack(side="right", fill="y")
-
-        self.result_text = tk.Text(
-            result_frame, width=60, height=10, yscrollcommand=scrollbar.set
-        )
-        self.result_text.pack(padx=5, pady=5, fill="both", expand=True)
-        scrollbar.config(command=self.result_text.yview)
-
-        # Tabla de estadísticas (mitad derecha)
-        stats_frame = ttk.LabelFrame(main_frame, text="Estadísticas de Juego")
+        # Tabla de estadísticas (lado derecho)
+        stats_frame = ttk.LabelFrame(top_frame, text="Estadísticas de Juego")
         stats_frame.pack(side="right", padx=(5, 0), fill="both", expand=True)
 
         self.stats_tree = ttk.Treeview(
@@ -148,6 +115,47 @@ class RuletaPredictorGUI:
         ]
         for stat in stats:
             self.stats_tree.insert("", "end", values=(stat, ""))
+
+        # Frame para ingresar nuevos números
+        input_number_frame = ttk.LabelFrame(self.master, text="Ingresar nuevo número")
+        input_number_frame.pack(padx=10, pady=10, fill="x")
+
+        self.number_entry = ttk.Entry(
+            input_number_frame, width=10, validate="key", validatecommand=vcmd
+        )
+        self.number_entry.pack(side="left", padx=5, pady=5)
+        self.number_entry.bind("<Return>", self.predict_number)
+        ttk.Button(
+            input_number_frame, text="Predecir", command=self.predict_number
+        ).pack(side="left", padx=5, pady=5)
+        ttk.Button(
+            input_number_frame, text="Borrar último", command=self.delete_last
+        ).pack(side="left", padx=5, pady=5)
+        ttk.Button(
+            input_number_frame, text="Guardar Numeros", command=self.guardar_numeros
+        ).pack(side="left", padx=5, pady=5)
+
+        # Frame para números salidos
+        self.numeros_salidos_frame = ttk.LabelFrame(self.master, text="Números Salidos")
+        self.numeros_salidos_frame.pack(padx=10, pady=5, fill="x")
+
+        self.numeros_salidos_label = ttk.Label(
+            self.numeros_salidos_frame, text="", wraplength=780
+        )
+        self.numeros_salidos_label.pack(padx=5, pady=5, fill="x")
+
+        # Área de resultados
+        result_frame = ttk.LabelFrame(self.master, text="Resultados")
+        result_frame.pack(padx=10, pady=10, fill="both", expand=True)
+
+        scrollbar = ttk.Scrollbar(result_frame)
+        scrollbar.pack(side="right", fill="y")
+
+        self.result_text = tk.Text(
+            result_frame, width=60, height=10, yscrollcommand=scrollbar.set
+        )
+        self.result_text.pack(padx=5, pady=5, fill="both", expand=True)
+        scrollbar.config(command=self.result_text.yview)
 
     def validate_entry(self, P):
         if P.strip() == "":
