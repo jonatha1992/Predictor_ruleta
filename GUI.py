@@ -14,20 +14,21 @@ class RuletaPredictorGUI:
         self.create_widgets()
 
     def create_widgets(self):
-        # Frame principal para la parte superior (parámetros y estadísticas)
+        # Nuevo frame para contener input_frame y stats_frame
+        # Frame principal para contener input_frame y stats_frame
         top_frame = ttk.Frame(self.master)
         top_frame.pack(padx=10, pady=10, fill="x")
 
         # Frame para los parámetros de entrada (lado izquierdo)
         input_frame = ttk.LabelFrame(top_frame, text="Parámetros de entrada")
-        input_frame.pack(side="left", padx=(0, 5), fill="y")
+        input_frame.pack(side="left", padx=(0, 5), fill="x")
 
         ttk.Label(input_frame, text="Tipo de Ruleta:").grid(
             row=0, column=0, sticky="w", padx=5, pady=5
         )
         self.ruleta_type = ttk.Combobox(
             input_frame,
-            values=["Electromecánica", "Electrónica", "Crupier"],
+            values=["Electromecánica", "Virtual", "Crupier"],
             state="readonly",
         )
         self.ruleta_type.grid(row=0, column=1, padx=5, pady=5)
@@ -92,20 +93,86 @@ class RuletaPredictorGUI:
         )
         self.reiniciar_button.pack(side="left")
 
+        # Frame para ingresar nuevos números
+        input_number_frame = ttk.LabelFrame(self.master, text="Ingresar nuevo número")
+        input_number_frame.pack(padx=10, pady=10, fill="x")
+
+        self.number_entry = ttk.Entry(
+            input_number_frame, width=10, validate="key", validatecommand=vcmd
+        )
+        self.number_entry.pack(side="left", padx=5, pady=5)
+        self.number_entry.bind("<Return>", self.predict_number)
+        ttk.Button(
+            input_number_frame, text="Predecir", command=self.predict_number
+        ).pack(side="left", padx=5, pady=5)
+        ttk.Button(
+            input_number_frame, text="Borrar último", command=self.delete_last
+        ).pack(side="left", padx=5, pady=5)
+        ttk.Button(
+            input_number_frame, text="Guardar Numeros", command=self.guardar_numeros
+        ).pack(side="left", padx=5, pady=5)
+
+        # Frame para números salidos y estadísticas
+        numeros_stats_frame = ttk.Frame(self.master)
+        numeros_stats_frame.pack(padx=10, pady=5, fill="x")
+
+        # Frame para números salidos (lado izquierdo)
+        self.numeros_salidos_frame = ttk.LabelFrame(
+            numeros_stats_frame, text="Números Salidos"
+        )
+        self.numeros_salidos_frame.pack(
+            side="left", padx=(0, 5), fill="both", expand=True
+        )
+
+        self.numeros_salidos_label = ttk.Label(
+            self.numeros_salidos_frame, text="", wraplength=380
+        )
+        self.numeros_salidos_label.pack(padx=5, pady=5, fill="x", expand=True)
+
         # Tabla de estadísticas (lado derecho)
-        stats_frame = ttk.LabelFrame(top_frame, text="Estadísticas de Juego")
+        stats_frame = ttk.LabelFrame(numeros_stats_frame, text="Estadísticas de Juego")
         stats_frame.pack(side="right", padx=(5, 0), fill="both", expand=True)
 
         self.stats_tree = ttk.Treeview(
-            stats_frame, columns=("Estadística", "Valor"), show="headings", height=6
+            stats_frame, columns=("Estadística", "Valor"), show="headings", height=4
         )
         self.stats_tree.heading("Estadística", text="Estadística")
         self.stats_tree.heading("Valor", text="Valor")
-        self.stats_tree.column("Estadística", width=130, anchor="w")
-        self.stats_tree.column("Valor", width=100, anchor="center")
+        self.stats_tree.column("Estadística", width=100, anchor="w")
+        self.stats_tree.column("Valor", width=40, anchor="center")
         self.stats_tree.pack(fill="both", expand=True)
 
-        # Inicializar la tabla con filas vacías
+        # Frame para resultados y estadísticas
+        result_stats_frame = ttk.Frame(self.master)
+        result_stats_frame.pack(padx=10, pady=10, fill="both", expand=True)
+
+        # Área de resultados (lado izquierdo)
+        result_frame = ttk.LabelFrame(result_stats_frame, text="Resultados")
+        result_frame.pack(side="left", padx=(0, 5), fill="both", expand=True)
+
+        scrollbar = ttk.Scrollbar(result_frame)
+        scrollbar.pack(side="right", fill="y")
+
+        self.result_text = tk.Text(
+            result_frame, width=40, height=10, yscrollcommand=scrollbar.set
+        )
+        self.result_text.pack(padx=5, pady=5, fill="both", expand=True)
+        scrollbar.config(command=self.result_text.yview)
+
+        # Tabla de estadísticas (lado derecho)
+        stats_frame2 = ttk.LabelFrame(result_stats_frame, text="Estadísticas de Juego")
+        stats_frame2.pack(side="right", padx=(5, 0), fill="both", expand=True)
+
+        self.stats_tree2 = ttk.Treeview(
+            stats_frame2, columns=("Estadística", "Valor"), show="headings", height=4
+        )
+        self.stats_tree2.heading("Estadística", text="Estadística")
+        self.stats_tree2.heading("Valor", text="Valor")
+        self.stats_tree2.column("Estadística", width=100, anchor="w")
+        self.stats_tree2.column("Valor", width=40, anchor="center")
+        self.stats_tree2.pack(fill="both", expand=True)
+
+        # Inicializar las tablas con filas vacías
         stats = [
             "Números ingresados",
             "Números Predecidos",
@@ -113,8 +180,9 @@ class RuletaPredictorGUI:
             "Sin salir",
             "Ganancia Neta",
         ]
-        for stat in stats:
-            self.stats_tree.insert("", "end", values=(stat, ""))
+        for tree in [self.stats_tree, self.stats_tree2]:
+            for stat in stats:
+                tree.insert("", "end", values=(stat, ""))
 
         # Frame para ingresar nuevos números
         input_number_frame = ttk.LabelFrame(self.master, text="Ingresar nuevo número")
