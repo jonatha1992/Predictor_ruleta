@@ -3,10 +3,10 @@
     "[python]": {
         "editor.defaultFormatter": "ms-python.autopep8",
         "editor.formatOnSave": true,
-        "editor.rulers": [120],
+        "editor.rulers": [140],
       },
       "autopep8.args": [
-        "--max-line-length=120",
+        "--max-line-length=140",
         "--aggressive",
         "--aggressive"
     ],
