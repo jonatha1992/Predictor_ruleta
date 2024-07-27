@@ -32,10 +32,8 @@ class RuletaPredictorGUI:
         self.ruleta_type.set("Electromecánica")
 
         parameters = [
-            ("Valor ficha inicial:", "valor_ficha_inicial", "Valor entre (1-1000)", "1000",),
             ("Cantidad de vecinos:", "cantidad_vecinos", "Valores entre (1-4) (0 = sin vecinos)", "3",),
             ("Límite de juego:", "limite_juego", "Valores entre (1 al 5) ", "5"),
-            ("Límite de pretendiente:", "limite_pretendiente", "Valores entre (1-5)", "1",),
             ("Umbral de probabilidad:", "umbral_probabilidad", "Valores entre (20-100)", "20",),
         ]
 
@@ -66,18 +64,18 @@ class RuletaPredictorGUI:
         self.numeros_salidos_frame = ttk.LabelFrame(numeros_stats_frame, text="Números Salidos")
         self.numeros_salidos_frame.pack(side="left", padx=(0, 5), fill="both", expand=True)
 
-        self.numeros_salidos_label = ttk.Label(self.numeros_salidos_frame, text="", wraplength=500)
-        self.numeros_salidos_label.pack(padx=5, pady=5, fill="x", expand=True)
+        self.numeros_salidos_label = ttk.Label(self.numeros_salidos_frame, text="", anchor="nw", justify="left", wraplength=500)
+        self.numeros_salidos_label.pack(side="top", padx=5, pady=5, fill="x", expand=True)
 
         # Tabla de estadísticas (lado derecho)
         stats_frame = ttk.LabelFrame(numeros_stats_frame, text="Estadísticas de Juego")
         stats_frame.pack(side="right", padx=(5, 0))
-        estadisticas = ["Números Ingresados", "Números Predecidos", "Aciertos ", "No Salidos"]
+        estadisticas = ["Números Ingresados", "Números Predecidos", "Aciertos ", "No acertados"]
         self.stats_tree = ttk.Treeview(stats_frame, columns=("Estadística", "Valor"), show="headings", height=4)
         self.stats_tree.heading("Estadística", text="Estadística")
         self.stats_tree.heading("Valor", text="Valor")
         self.stats_tree.column("Estadística", width=160, anchor="w")
-        self.stats_tree.column("Valor", width=50, anchor="center")
+        self.stats_tree.column("Valor", width=150, anchor="center")
         self.stats_tree.pack(fill="x", expand=False)
 
         for tree in [self.stats_tree, self.stats_tree]:
@@ -119,25 +117,38 @@ class RuletaPredictorGUI:
         probabildades_frame = ttk.LabelFrame(result_stats_frame, text="Probabilidades de Juego")
         probabildades_frame.pack(side="right", padx=(5, 0), fill="both", expand=True)
 
+        # Crear un frame para contener el Treeview y el scrollbar
+        tree_frame = ttk.Frame(probabildades_frame)
+        tree_frame.pack(fill="both", expand=True)
+
+        # Crear el Treeview
         self.probabilidades_tree = ttk.Treeview(
-            probabildades_frame,
+            tree_frame,
             columns=(
                 "Número",
-                "Probalidad",
+                "Probabilidad",
                 "Tardanza",
                 "Repetición"),
-            show="headings",
+            show="tree headings",
             height=4)
 
+        self.probabilidades_tree.column("#0", width=0, stretch=tk.NO)
         self.probabilidades_tree.heading("Número", text="Número")
-        self.probabilidades_tree.heading("Probalidad", text="Probalidad")
+        self.probabilidades_tree.heading("Probabilidad", text="Probabilidad")
         self.probabilidades_tree.heading("Tardanza", text="Tardanza")
         self.probabilidades_tree.heading("Repetición", text="Repetición")
-        self.probabilidades_tree.column("Número", width=40, anchor="w")
-        self.probabilidades_tree.column("Probalidad", width=40, anchor="w")
-        self.probabilidades_tree.column("Tardanza", width=40, anchor="w")
-        self.probabilidades_tree.column("Repetición", width=40, anchor="center")
-        self.probabilidades_tree.pack(fill="both", expand=True)
+        self.probabilidades_tree.column("Número", width=60, anchor="center")
+        self.probabilidades_tree.column("Probabilidad", width=60, anchor="center")
+        self.probabilidades_tree.column("Tardanza", width=60, anchor="center")
+        self.probabilidades_tree.column("Repetición", width=60, anchor="center")
+
+        # Crear y posicionar el scrollbar vertical
+        scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=self.probabilidades_tree.yview)
+        scrollbar.pack(side="right", fill="y")
+
+        # Configurar el Treeview para usar el scrollbar y posicionarlo
+        self.probabilidades_tree.configure(yscrollcommand=scrollbar.set)
+        self.probabilidades_tree.pack(side="left", fill="both", expand=True)
 
     def validate_entry(self, P):
         if P.strip() == "":
@@ -159,14 +170,10 @@ class RuletaPredictorGUI:
             for key, entry in self.param_entries.items():
                 try:
                     value = int(entry.get())
-                    if key == "valor_ficha_inicial" and not value > 0:
-                        raise ValueError("El valor de ficha inicial debe ser un entero positivo.")
-                    elif key == "cantidad_vecinos" and not (0 <= value <= 4):
+                    if key == "cantidad_vecinos" and not (0 <= value <= 4):
                         raise ValueError("La cantidad de vecinos debe estar entre 0 y 4.")
                     elif key == "limite_juego" and not (1 <= value <= 5):
                         raise ValueError("El límite de juego debe estar entre 1 y 5.")
-                    elif key == "limite_pretendiente" and not (1 <= value <= 5):
-                        raise ValueError("El límite de pretendiente debe estar entre 1 y 5.")
                     elif key == "umbral_probabilidad" and not (20 <= value <= 100):
                         raise ValueError("El umbral de probabilidad debe estar entre 20 y 100.")
                     params[key] = value
@@ -193,6 +200,8 @@ class RuletaPredictorGUI:
             self.result_text.insert(
                 tk.END, f"Predictor iniciado correctamente para ruleta {ruleta_tipo}.\n"
             )
+            self.reiniciar_button.config(state="normal")
+            self.iniciar_button.config(state="disabled")
 
         except FileNotFoundError as e:
             messagebox.showerror("Error", str(e))
@@ -225,6 +234,7 @@ class RuletaPredictorGUI:
 
                 self.result_text.see(tk.END)
                 self.actualizar_estadisticas()
+
             else:
                 messagebox.showerror("Error", "El número debe estar entre 0 y 36.")
         except ValueError:
@@ -259,6 +269,8 @@ class RuletaPredictorGUI:
             )
             self.limpiar_estadisticas()
             self.predictor = None
+            self.iniciar_button.config(state="normal")
+            self.reiniciar_button.config(state="disabled")
         else:
             self.result_text.insert(tk.END, "Reinicio cancelado.\n")
 
@@ -292,6 +304,17 @@ class RuletaPredictorGUI:
 
             numeros_text = ", ".join(map(str, reversed(self.predictor.contador.numeros_partida)))
             self.numeros_salidos_label.config(text=numeros_text)
+
+        if self.predictor and len(self.predictor.numeros_a_jugar) > 0:
+            self.probabilidades_tree.delete(*self.probabilidades_tree.get_children())
+
+            for numero in self.predictor.numeros_a_jugar:
+                self.probabilidades_tree.insert("", "end", values=(
+                    numero.numero,
+                    f"{numero.probabilidad}%",
+                    numero.tardancia,
+                    numero.repetido
+                ))
 
     def limpiar_estadisticas(self):
         for item in self.stats_tree.get_children():

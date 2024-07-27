@@ -17,17 +17,12 @@ class Parametro_Juego:
     # Inicializa el objeto de la clase con un nombre de archivo y crea el modelo.
     def __init__(
         self,
-        valor_ficha_inicial,
         cantidad_vecinos,
         limite_juego,
-        limite_pretendiente,
         umbral_probabilidad,
         **kwargs
     ):
         # Parametros juegos
-        self.valor_ficha_inicial = valor_ficha_inicial
-        self.valor_ficha = valor_ficha_inicial
-        self.limite_pretendiente = limite_pretendiente
         self.limite_juego = limite_juego
         self.lugares_vecinos = cantidad_vecinos
         self.numerosAnteriores = 6
@@ -45,9 +40,3 @@ class Parametro_Juego:
             self.numerosAnteriores = kwargs["num_Anteriores"]
         if "juego" in kwargs:
             self.juego = kwargs["juego"]
-
-    def aumentar_valor_ficha(self):
-        self.valor_ficha *= 2
-
-    def bajar_valor_ficha(self):
-        self.valor_ficha = self.valor_ficha_inicial
