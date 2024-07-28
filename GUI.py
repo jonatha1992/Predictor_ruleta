@@ -70,9 +70,9 @@ class RuletaPredictorGUI:
         # Tabla de estadísticas (lado derecho)
         stats_frame = ttk.LabelFrame(numeros_stats_frame, text="Estadísticas de Juego")
         stats_frame.pack(side="right", padx=(5, 0))
-        estadisticas = ["Números Ingresados", "Números Predecidos", "Aciertos ", "No acertados"]
+        estadisticas = ["Ingresados", "Predecidos", "Aciertos ", "No acertados"]
         self.stats_tree = ttk.Treeview(stats_frame, columns=("Estadística", "Valor"), show="headings", height=4)
-        self.stats_tree.heading("Estadística", text="Estadística")
+        self.stats_tree.heading("Estadística Numeros", text="Estadística")
         self.stats_tree.heading("Valor", text="Valor")
         self.stats_tree.column("Estadística", width=160, anchor="w")
         self.stats_tree.column("Valor", width=150, anchor="center")
