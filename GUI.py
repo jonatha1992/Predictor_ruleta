@@ -3,6 +3,7 @@ from tkinter import ttk, messagebox
 import os
 from Entity.Predictor import Predictor
 from Entity.Parametro import Parametro_Juego
+from Config import get_excel_file, get_ruleta_types
 
 
 class RuletaPredictorGUI:
@@ -15,6 +16,7 @@ class RuletaPredictorGUI:
 
     def create_widgets(self):
         # Nuevo frame para contener input_frame y stats_frame
+
         top_frame = ttk.Frame(self.master)
         top_frame.pack(padx=10, pady=10, fill="x")
 
@@ -22,19 +24,26 @@ class RuletaPredictorGUI:
         input_frame = ttk.LabelFrame(top_frame, text="Parámetros de entrada")
         input_frame.pack(side="left", padx=(0, 5), fill="x")
 
-        ttk.Label(input_frame, text="Tipo de Ruleta:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
-        self.ruleta_type = ttk.Combobox(
-            input_frame,
-            values=["Electromecánica", "Virtual", "Crupier"],
-            state="readonly",)
-
-        self.ruleta_type.grid(row=0, column=1, padx=5, pady=5)
-        self.ruleta_type.set("Electromecánica")
+        try:
+            tipos_ruleta = get_ruleta_types()
+            ttk.Label(input_frame, text="Tipo de Ruleta:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
+            self.ruleta_type = ttk.Combobox(input_frame,
+                                            values=tipos_ruleta,
+                                            state="readonly")
+            self.ruleta_type.grid(row=0, column=1, padx=5, pady=5)
+            if tipos_ruleta:
+                self.ruleta_type.set(tipos_ruleta[0])
+        except Exception as e:
+            messagebox.showerror("Error", f"No se pudieron cargar los tipos de ruleta: {str(e)}")
+            self.ruleta_type = ttk.Combobox(
+                input_frame,
+                values=["Error al cargar"],
+                state="disabled")
 
         parameters = [
             ("Cantidad de vecinos:", "cantidad_vecinos", "Valores entre (1-4) (0 = sin vecinos)", "3",),
             ("Límite de juego:", "limite_juego", "Valores entre (1 al 5) ", "5"),
-            ("Umbral de probabilidad:", "umbral_probabilidad", "Valores entre (20-100)", "20",),
+            ("Umbral de probabilidad:", "umbral_probabilidad", "Valores entre (10-100)", "20",),
         ]
 
         self.param_entries = {}
@@ -72,7 +81,7 @@ class RuletaPredictorGUI:
         stats_frame.pack(side="right", padx=(5, 0))
         estadisticas = ["Ingresados", "Predecidos", "Aciertos ", "No acertados"]
         self.stats_tree = ttk.Treeview(stats_frame, columns=("Estadística", "Valor"), show="headings", height=4)
-        self.stats_tree.heading("Estadística Numeros", text="Estadística")
+        self.stats_tree.heading("Estadística", text="Estadística Numeros")
         self.stats_tree.heading("Valor", text="Valor")
         self.stats_tree.column("Estadística", width=160, anchor="w")
         self.stats_tree.column("Valor", width=150, anchor="center")
@@ -174,7 +183,7 @@ class RuletaPredictorGUI:
                         raise ValueError("La cantidad de vecinos debe estar entre 0 y 4.")
                     elif key == "limite_juego" and not (1 <= value <= 5):
                         raise ValueError("El límite de juego debe estar entre 1 y 5.")
-                    elif key == "umbral_probabilidad" and not (20 <= value <= 100):
+                    elif key == "umbral_probabilidad" and not (10 <= value <= 100):
                         raise ValueError("El umbral de probabilidad debe estar entre 20 y 100.")
                     params[key] = value
                 except ValueError as e:
@@ -182,26 +191,15 @@ class RuletaPredictorGUI:
                     return None
 
             parametros_juego = Parametro_Juego(**params)
-
-            if ruleta_tipo == "Electromecánica":
-                excel_file = "./Data/Electromecanica.xlsx"
-            elif ruleta_tipo == "Electrónica":
-                excel_file = "./Data/Electronica.xlsx"
-            elif ruleta_tipo == "Crupier":
-                excel_file = "./Data/Crupier.xlsx"
-            else:
-                raise ValueError("Tipo de ruleta no válido")
-
-            if not os.path.exists(excel_file):
-                raise FileNotFoundError(f"El archivo {excel_file} no se encuentra.")
+            ruleta_tipo = self.ruleta_type.get()
+            excel_file = get_excel_file(ruleta_tipo)
 
             self.predictor = Predictor(excel_file, parametros_juego)
             self.limpiar_estadisticas()
             self.result_text.insert(
-                tk.END, f"Predictor iniciado correctamente para ruleta {ruleta_tipo}.\n"
+                tk.END, f"¡Predictor iniciado correctamente!\n"
             )
-            self.reiniciar_button.config(state="normal")
-            self.iniciar_button.config(state="disabled")
+            self.habilitar_juego()
 
         except FileNotFoundError as e:
             messagebox.showerror("Error", str(e))
@@ -209,6 +207,20 @@ class RuletaPredictorGUI:
             messagebox.showerror("Error", str(e))
         except Exception as e:
             messagebox.showerror("Error", f"Error inesperado: {str(e)}")
+
+    def habilitar_juego(self):
+        self.reiniciar_button.config(state="normal")
+        self.iniciar_button.config(state="disabled")
+        self.ruleta_type.config(state="disabled")
+        for entry in self.param_entries.values():
+            entry.config(state="disabled")
+
+    def desahabilitar_juego(self):
+        self.reiniciar_button.config(state="disabled")
+        self.iniciar_button.config(state="normal")
+        self.ruleta_type.config(state="readonly")
+        for entry in self.param_entries.values():
+            entry.config(state="normal")
 
     def predict_number(self, event=None):
         if not self.predictor:
@@ -264,13 +276,10 @@ class RuletaPredictorGUI:
         if confirmacion:
             if self.predictor:
                 self.predictor.guardar_reporte()
-            self.result_text.insert(
-                tk.END, "El juego ha sido reiniciado. Debe iniciar el predictor.\n"
-            )
+            self.result_text.insert(tk.END, "El juego ha sido reiniciado. Debe iniciar el predictor.\n")
             self.limpiar_estadisticas()
             self.predictor = None
-            self.iniciar_button.config(state="normal")
-            self.reiniciar_button.config(state="disabled")
+            self.desahabilitar_juego()
         else:
             self.result_text.insert(tk.END, "Reinicio cancelado.\n")
 
@@ -320,7 +329,7 @@ class RuletaPredictorGUI:
         for item in self.stats_tree.get_children():
             self.stats_tree.delete(item)
 
-        stats = ["Números ingresados", "Números Predecidos", "Aciertos", "No acertados"]
+        stats = ["ingresados", "Predecidos", "Aciertos", "No acertados"]
         for stat in stats:
             self.stats_tree.insert("", "end", values=(stat, ""))
 

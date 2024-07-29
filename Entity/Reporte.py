@@ -10,7 +10,6 @@ class Reporte:
     def generar_reporte(
         self,
         contador,
-        hiperparametros,
         Parametro_Juego,
         filename,
         filename_reporte,
@@ -23,28 +22,20 @@ class Reporte:
         datos = {
             "Juego": juego,
             "Juego fecha y hora": fecha_hora_actual,
-            "Numeros jugados": contador.jugados,
+            "Predecidos": contador.jugados,
             "Aciertos Totales": contador.aciertos_totales,
             "Aciertos de Predecidos": contador.acierto_predecidos,
             "V1L": contador.acierto_vecinos_1lugar,
             "V2L": contador.acierto_vecinos_2lugar,
             "V3L": contador.acierto_vecinos_3lugar,
             "V4L": contador.acierto_vecinos_4lugar,
-            "l2": hiperparametros.l2_lambda,
-            "dropout rate": hiperparametros.dropout_rate,
-            "learning rate": hiperparametros.learning_rate,
-            "epoca": hiperparametros.epoc,
-            "batch_size": hiperparametros.batchSize,
             "Nros a Predecir": Parametro_Juego.numeros_a_predecir,
             "Nros Anteriores": Parametro_Juego.numerosAnteriores,
             "Cant. Vecinos": Parametro_Juego.lugares_vecinos,
-            "Valor_ficha": Parametro_Juego.valor_ficha,
             "Limite_juego": Parametro_Juego.limite_juego,
-            "Limite_pretendiente": Parametro_Juego.limite_pretendiente,
             "Probabilidad": Parametro_Juego.umbral_probilidad,
             "Efectividad": contador.sacarEfectividad(),
             "Ruleta": filename,
-            "Ganancia": contador.ganancia_neta,
         }
 
         # Convertir el diccionario en un DataFrame de Pandas

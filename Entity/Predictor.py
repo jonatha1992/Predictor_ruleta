@@ -188,7 +188,6 @@ class Predictor:
     def guardar_reporte(self):
         self.reporte.generar_reporte(
             self.contador,
-            self.hiperparametros,
             self.Parametro_juego,
             self.filename,
             filename_reporte="Reporte_juego.xlsx",
