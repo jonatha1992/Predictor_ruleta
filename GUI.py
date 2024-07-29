@@ -3,6 +3,7 @@ from tkinter import ttk, messagebox
 import os
 from Entity.Predictor import Predictor
 from Entity.Parametro import Parametro_Juego
+from Entity.Vecinos import colores_ruleta
 from Config import get_excel_file, get_ruleta_types
 
 
@@ -317,13 +318,32 @@ class RuletaPredictorGUI:
         if self.predictor and len(self.predictor.numeros_a_jugar) > 0:
             self.probabilidades_tree.delete(*self.probabilidades_tree.get_children())
 
+            # for numero in self.predictor.numeros_a_jugar:
+            #     self.probabilidades_tree.insert("", "end", values=(
+            #         numero.numero,
+            #         f"{numero.probabilidad}%",
+            #         numero.tardancia,
+            #         numero.repetido
+            #     ))
+
             for numero in self.predictor.numeros_a_jugar:
-                self.probabilidades_tree.insert("", "end", values=(
-                    numero.numero,
-                    f"{numero.probabilidad}%",
-                    numero.tardancia,
-                    numero.repetido
-                ))
+                color = colores_ruleta.get(numero.numero, 'black')
+                print(f"Número: {numero.numero}, Color: {color}")  # Debugging
+
+                item = self.probabilidades_tree.insert("", "end", values=(numero.numero,
+                                                                          f"{numero.probabilidad}%",
+                                                                          numero.tardancia,
+                                                                          numero.repetido
+                                                                          ))
+
+                # Configurar el tag de color solo para la primera columna
+                self.probabilidades_tree.tag_configure(f'color_{numero.numero}', foreground=color)
+
+                # Aplicar el tag solo a la primera columna
+                self.probabilidades_tree.item(item, tags=(f'color_{numero.numero}',))
+
+            # Forzar actualización
+            self.probabilidades_tree.update()
 
     def limpiar_estadisticas(self):
         for item in self.stats_tree.get_children():

@@ -18,10 +18,8 @@ def main():
         else:
             predictor = None
             Parametro_juego = Parametro_Juego(
-                valor_ficha_inicial,
                 cantidad_vecinos,
                 limite_juego,
-                limite_pretendiente,
                 umbral_probabilidad,
             )
             predictor = Predictor(carpeta, Parametro_juego)
