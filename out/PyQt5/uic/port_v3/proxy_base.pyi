@@ -1,3 +1,0 @@
-from ..Compiler.proxy_metaclass import ProxyMetaclass as ProxyMetaclass
-
-class ProxyBase(metaclass=ProxyMetaclass): ...
