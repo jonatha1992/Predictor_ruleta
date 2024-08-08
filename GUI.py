@@ -318,14 +318,6 @@ class RuletaPredictorGUI:
         if self.predictor and len(self.predictor.numeros_a_jugar) > 0:
             self.probabilidades_tree.delete(*self.probabilidades_tree.get_children())
 
-            # for numero in self.predictor.numeros_a_jugar:
-            #     self.probabilidades_tree.insert("", "end", values=(
-            #         numero.numero,
-            #         f"{numero.probabilidad}%",
-            #         numero.tardancia,
-            #         numero.repetido
-            #     ))
-
             for numero in self.predictor.numeros_a_jugar:
                 color = colores_ruleta.get(numero.numero, 'black')
                 print(f"Número: {numero.numero}, Color: {color}")  # Debugging

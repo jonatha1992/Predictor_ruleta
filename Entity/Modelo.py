@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 import os
+from Config import get_relative_path
 
 
 class Modelo:
@@ -16,12 +17,13 @@ class Modelo:
         self.numeros = self.df["Salidos"].values.tolist()
         self.hiperparametros = hiperparametro
 
-        modelo_path = "./Models/" + self.nombreModelo + ".keras"
+        # modelo_path = "./Models/" + self.nombreModelo + ".keras"
+        modelo_path = get_relative_path(f"./Models/{self.nombreModelo}.keras")
 
         try:
             self.model = tf.keras.models.load_model(modelo_path)
             print("Modelo cargado exitosamente.")
-        except:
+        except BaseException:
             print("No se pudo cargar el modelo existente. Creando uno nuevo.")
             self.model = self._crear_modelo()
             self.guardar_modelo()
@@ -84,7 +86,7 @@ class Modelo:
             monitor="val_loss", factor=0.5, patience=20, min_lr=1e-6
         )
         model_checkpoint = tf.keras.callbacks.ModelCheckpoint(
-            filepath="./Models/best_model.keras",
+            filepath=get_relative_path("./Models/best_model.keras"),
             save_best_only=True,
             monitor="val_loss",
         )
@@ -106,7 +108,7 @@ class Modelo:
             len(self.numeros) - (self.hiperparametros.numerosAnteriores + 1)
         ):
             secuencias.append(
-                self.numeros[i : i + self.hiperparametros.numerosAnteriores]
+                self.numeros[i: i + self.hiperparametros.numerosAnteriores]
             )
             siguientes_numeros.append(
                 self.numeros[i + self.hiperparametros.numerosAnteriores]

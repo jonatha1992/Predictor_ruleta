@@ -9,6 +9,7 @@ from datetime import datetime
 from Entity.Parametro import HiperParametros, Parametro_Juego
 from Entity.Vecinos import vecino1lugar, vecino2lugar, vecinos3lugar, Vecino4lugar
 from Entity.Reporte import Reporte
+from Config import get_relative_path
 
 
 class Predictor:
@@ -24,6 +25,8 @@ class Predictor:
         self.reporte = Reporte()
         self.filebasename = os.path.splitext(os.path.basename(filename))[0]
         self.model = tf.keras.models.load_model("./Models/Model_" + self.filebasename + ".keras")  # type: ignore
+        self.model = tf.keras.models.load_model(get_relative_path(f"./Models/Model_{self.filebasename}.keras"))
+
         self.numeros_a_jugar = list()
         self.numeros_predecidos = list()
         self.no_salidos = list()
