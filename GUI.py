@@ -345,6 +345,7 @@ class RuletaPredictorGUI:
         for stat in stats:
             self.stats_tree.insert("", "end", values=(stat, ""))
 
+        self.probabilidades_tree.delete(*self.probabilidades_tree.get_children())
         self.result_text.delete("1.0", tk.END)
         self.numeros_salidos_label.config(text="")
 
