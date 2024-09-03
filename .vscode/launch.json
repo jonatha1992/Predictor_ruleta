@@ -8,7 +8,7 @@
             "name": "Depurador de Python: Archivo actual con argumentos",
             "type": "debugpy",
             "request": "launch",
-            "program": "GUI.py",
+            "program": "Main.py",
             "console": "integratedTerminal",
             "args": "${command:pickArgs}"
         }

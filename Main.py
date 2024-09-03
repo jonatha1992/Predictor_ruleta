@@ -297,6 +297,48 @@ class RuletaPredictorGUI:
         else:
             self.result_text.insert(tk.END, "Guardado cancelado.\n")
 
+    # def actualizar_estadisticas(self):
+    #     if self.predictor and self.predictor.contador:
+    #         estadisticas = [
+    #             ("Números Ingresados", self.predictor.contador.ingresados),
+    #             ("Números Predecidos", self.predictor.contador.jugados),
+    #             ("Aciertos ", self.predictor.contador.aciertos_totales),
+    #             ("No acertados", self.predictor.contador.Sin_salir_nada),
+    #         ]
+
+    #         for item in self.stats_tree.get_children():
+    #             self.stats_tree.delete(item)
+
+    #         for stat, value in estadisticas:
+    #             self.stats_tree.insert("", "end", values=(stat, value))
+
+    #         numeros_text = ", ".join(map(str, reversed(self.predictor.contador.numeros_partida)))
+    #         self.numeros_salidos_label.config(text=numeros_text)
+
+    #     if self.predictor and len(self.predictor.numeros_a_jugar) > 0:
+    #         # self.probabilidades_tree.delete(*self.probabilidades_tree.get_children())
+    #         for item in self.probabilidades_tree.get_children():
+    #             self.probabilidades_tree.delete(item)
+
+    #         for numero in self.predictor.numeros_a_jugar:
+    #             color = colores_ruleta.get(numero.numero, 'black')
+    #             print(f"Número: {numero.numero}, Color: {color}")  # Debugging
+
+    #             item = self.probabilidades_tree.insert("", "end", values=(numero.numero,
+    #                                                                       f"{numero.probabilidad}%",
+    #                                                                       numero.tardancia,
+    #                                                                       numero.repetido
+    #                                                                       ))
+
+    #             # Configurar el tag de color solo para la primera columna
+    #             self.probabilidades_tree.tag_configure(f'color_{numero.numero}', foreground=color)
+
+    #             # Aplicar el tag solo a la primera columna
+    #             self.probabilidades_tree.item(item, tags=(f'color_{numero.numero}',))
+
+    #         # Forzar actualización
+    #         self.probabilidades_tree.update()
+
     def actualizar_estadisticas(self):
         if self.predictor and self.predictor.contador:
             estadisticas = [
@@ -316,7 +358,8 @@ class RuletaPredictorGUI:
             self.numeros_salidos_label.config(text=numeros_text)
 
         if self.predictor and len(self.predictor.numeros_a_jugar) > 0:
-            self.probabilidades_tree.delete(*self.probabilidades_tree.get_children())
+            for item in self.probabilidades_tree.get_children():
+                self.probabilidades_tree.delete(item)
 
             for numero in self.predictor.numeros_a_jugar:
                 color = colores_ruleta.get(numero.numero, 'black')
@@ -328,14 +371,11 @@ class RuletaPredictorGUI:
                                                                           numero.repetido
                                                                           ))
 
-                # Configurar el tag de color solo para la primera columna
                 self.probabilidades_tree.tag_configure(f'color_{numero.numero}', foreground=color)
-
-                # Aplicar el tag solo a la primera columna
                 self.probabilidades_tree.item(item, tags=(f'color_{numero.numero}',))
-
-            # Forzar actualización
-            self.probabilidades_tree.update()
+        else:
+            for item in self.probabilidades_tree.get_children():
+                self.probabilidades_tree.delete(item)
 
     def limpiar_estadisticas(self):
         for item in self.stats_tree.get_children():
