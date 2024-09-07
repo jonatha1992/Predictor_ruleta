@@ -1,3 +1,4 @@
+import datetime
 import tkinter as tk
 from tkinter import ttk, messagebox
 import os
@@ -391,6 +392,7 @@ class RuletaPredictorGUI:
 
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    app = RuletaPredictorGUI(root)
-    root.mainloop()
+    if datetime.date.today() < datetime.date(2024, 9, 30):
+        root = tk.Tk()
+        app = RuletaPredictorGUI(root)
+        root.mainloop()
