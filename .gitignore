@@ -4,3 +4,4 @@ ramdom_search/
 env/
 best_models/
 output/
+__pycache__/
