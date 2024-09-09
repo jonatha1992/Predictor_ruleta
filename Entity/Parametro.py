@@ -1,8 +1,8 @@
 class HiperParametros:
     # Inicializa el objeto de la clase con un nombre de archivo y crea el modelo.
-    def __init__(self, cantidad):
+    def __init__(self, cantidad, **kwargs):
         # hiperparamtros
-        self.numerosAnteriores = 9
+        self.numerosAnteriores = 4
         self.gru1 = 320
         self.gru2 = 128
         self.gru3 = 128
@@ -25,7 +25,7 @@ class Parametro_Juego:
         # Parametros juegos
         self.limite_juego = limite_juego
         self.lugares_vecinos = cantidad_vecinos
-        self.numerosAnteriores = 6
+        # self.numerosAnteriores = 4
         self.numeros_a_predecir = 10
         self.umbral_probilidad = umbral_probabilidad
 

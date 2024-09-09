@@ -13,14 +13,14 @@ from Config import get_relative_path
 
 
 class Predictor:
-    def __init__(self, filename, Parametro_Juego):
+    def __init__(self, filename, Parametro_Juego, **kwargs):
         self.filename = filename
         self.Parametro_juego = Parametro_Juego
         self.contador = Contador()
         self.df = pd.read_excel(filename, sheet_name="Salidos")
         self.contador.numeros = self.df["Salidos"].values.tolist()
         self.hiperparametros = HiperParametros(len(self.contador.numeros))
-
+        self.hiperparametros.numerosAnteriores = kwargs.get("numeros_anteriores", 4)
         Modelo(self.filename, self.hiperparametros)
         self.reporte = Reporte()
         self.filebasename = os.path.splitext(os.path.basename(filename))[0]
@@ -33,9 +33,9 @@ class Predictor:
         self.df_nuevo = self.df.copy()
 
     def predecir(self):
-        if self.contador.ingresados > self.Parametro_juego.numerosAnteriores:
-            secuencia_entrada = np.array(self.contador.numeros[-self.Parametro_juego.numerosAnteriores:]
-                                         ).reshape(1, self.Parametro_juego.numerosAnteriores, 1)
+        if self.contador.ingresados > self.hiperparametros.numerosAnteriores:
+            secuencia_entrada = np.array(self.contador.numeros[-self.hiperparametros.numerosAnteriores:]
+                                         ).reshape(1, self.hiperparametros.numerosAnteriores, 1)
             predicciones = self.model.predict(secuencia_entrada, verbose=0)
 
             # Filtrar predicciones basadas en el umbral de probabilidad
