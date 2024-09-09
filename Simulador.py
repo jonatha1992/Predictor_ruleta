@@ -48,8 +48,8 @@ def ejecutar_simulaciones(datos_simulacion):
                             umbral_probabilidad=umbral_probabilidad,
                             num_Anteriores=numeros_anteriores
                         )
-
-                        predictor = Predictor(filename, parametros_juego)
+                        hiperParametros = HiperParametros(numerosAnteriores=numeros_anteriores)
+                        predictor = Predictor(filename, parametros_juego, hiperParametros)
 
                         efectividad, contador = simular_juego(predictor, datos_simulacion)
 

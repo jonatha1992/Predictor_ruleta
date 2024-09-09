@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import os
 from Entity.Predictor import Predictor
-from Entity.Parametro import Parametro_Juego
+from Entity.Parametro import HiperParametros, Parametro_Juego
 from Entity.Vecinos import colores_ruleta
 from Config import get_excel_file, get_ruleta_types
 
@@ -198,8 +198,7 @@ class RuletaPredictorGUI:
             parametros_juego = Parametro_Juego(**params)
             ruleta_tipo = self.ruleta_type.get()
             excel_file = get_excel_file(ruleta_tipo)
-
-            self.predictor = Predictor(excel_file, parametros_juego)
+            self.predictor = Predictor(excel_file, parametros_juego, hiperparametros=HiperParametros())
             self.limpiar_estadisticas()
             self.result_text.insert(
                 tk.END, f"¡Predictor iniciado correctamente!\n"

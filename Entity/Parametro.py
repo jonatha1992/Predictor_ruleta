@@ -1,15 +1,15 @@
 class HiperParametros:
     # Inicializa el objeto de la clase con un nombre de archivo y crea el modelo.
-    def __init__(self, cantidad, **kwargs):
+    def __init__(self, **kwargs):
         # hiperparamtros
-        self.numerosAnteriores = 4
+        self.numerosAnteriores = kwargs.get("numerosAnteriores", 4)
         self.gru1 = 320
         self.gru2 = 128
         self.gru3 = 128
         self.l2_lambda = 0.001
         self.dropout_rate = 0.05
         self.learning_rate = 0.003
-        self.epoc = 100 if cantidad > 1000 else 10
+        self.epoc = 100
         self.batchSize = 500
 
 

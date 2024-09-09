@@ -13,14 +13,13 @@ from Config import get_relative_path
 
 
 class Predictor:
-    def __init__(self, filename, Parametro_Juego, **kwargs):
+    def __init__(self, filename, Parametro_Juego, hiperparametros, **kwargs):
         self.filename = filename
         self.Parametro_juego = Parametro_Juego
         self.contador = Contador()
         self.df = pd.read_excel(filename, sheet_name="Salidos")
         self.contador.numeros = self.df["Salidos"].values.tolist()
-        self.hiperparametros = HiperParametros(len(self.contador.numeros))
-        self.hiperparametros.numerosAnteriores = kwargs.get("numeros_anteriores", 4)
+        self.hiperparametros = hiperparametros
         Modelo(self.filename, self.hiperparametros)
         self.reporte = Reporte()
         self.filebasename = os.path.splitext(os.path.basename(filename))[0]
