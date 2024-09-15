@@ -20,12 +20,11 @@ class Predictor:
         self.df = pd.read_excel(filename, sheet_name="Salidos")
         self.contador.numeros = self.df["Salidos"].values.tolist()
         self.hiperparametros = hiperparametros
-        Modelo(self.filename, self.hiperparametros)
-        self.reporte = Reporte()
         self.filebasename = os.path.splitext(os.path.basename(filename))[0]
-        self.model = tf.keras.models.load_model("./Models/Model_" + self.filebasename + ".keras")  # type: ignore
-        self.model = tf.keras.models.load_model(get_relative_path(f"./Models/Model_{self.filebasename}.keras"))
 
+        modelo_nombre = f"Model_{self.filebasename}_N{self.hiperparametros.numerosAnteriores}"
+        modelo_path = get_relative_path(f"./Models/{modelo_nombre}.keras")
+        self.model = tf.keras.models.load_model(modelo_path)
         self.numeros_a_jugar = list()
         self.numeros_predecidos = list()
         self.no_salidos = list()
@@ -187,12 +186,16 @@ class Predictor:
         self.df_nuevo.loc[len(self.df_nuevo), "Orden"] = self.contador.ingresados
 
     # Guarda el DataFrame en un archivo de Excel.
+
     def guardar_reporte(self):
-        self.reporte.generar_reporte(
+
+        reporte = Reporte()
+        reporte.generar_reporte(
             self.contador,
             self.Parametro_juego,
             self.filename,
             filename_reporte="Reporte_juego.xlsx",
+            numeros_anteriores=self.hiperparametros.numerosAnteriores,
         )
 
     def guardar_excel(self):

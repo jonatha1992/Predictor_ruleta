@@ -198,7 +198,7 @@ class RuletaPredictorGUI:
             parametros_juego = Parametro_Juego(**params)
             ruleta_tipo = self.ruleta_type.get()
             excel_file = get_excel_file(ruleta_tipo)
-            self.predictor = Predictor(excel_file, parametros_juego, hiperparametros=HiperParametros())
+            self.predictor = Predictor(excel_file, parametros_juego, hiperparametros=HiperParametros(numerosAnteriores=10))
             self.limpiar_estadisticas()
             self.result_text.insert(
                 tk.END, f"¡Predictor iniciado correctamente!\n"

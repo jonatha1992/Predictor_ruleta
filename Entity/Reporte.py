@@ -13,6 +13,7 @@ class Reporte:
         Parametro_Juego,
         filename,
         filename_reporte,
+        numeros_anteriores,
     ):
         fecha_hora_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         juego = getattr(Parametro_Juego, "juego", "No es Simulación")
@@ -30,7 +31,7 @@ class Reporte:
             "V3L": contador.acierto_vecinos_3lugar,
             "V4L": contador.acierto_vecinos_4lugar,
             "Nros a Predecir": Parametro_Juego.numeros_a_predecir,
-            "Nros Anteriores": Parametro_Juego.numerosAnteriores,
+            "Nros Anteriores": numeros_anteriores,
             "Cant. Vecinos": Parametro_Juego.lugares_vecinos,
             "Limite_juego": Parametro_Juego.limite_juego,
             "Probabilidad": Parametro_Juego.umbral_probilidad,
