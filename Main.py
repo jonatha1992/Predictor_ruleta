@@ -15,9 +15,9 @@ class RuletaPredictorGUI:
         self.master.geometry("900x700")
         self.predictor = None
         self.create_widgets()
-        if datetime.date.today() > datetime.date(2024, 9, 19):
-            messagebox.showwarning("Fin del período de prueba", "El período de prueba ha finalizado. No se pueden ejecutar predicciones.")
-            self.master.destroy()
+        # if datetime.date.today() > datetime.date(2024, 9, 19):
+        #     messagebox.showwarning("Fin del período de prueba", "El período de prueba ha finalizado. No se pueden ejecutar predicciones.")
+        #     self.master.destroy()
 
     def create_widgets(self):
         # Nuevo frame para contener input_frame y stats_frame
@@ -48,7 +48,7 @@ class RuletaPredictorGUI:
         parameters = [
             ("Cantidad de vecinos:", "cantidad_vecinos", "Valores entre (1-4) (0 = sin vecinos)", "3",),
             ("Límite de juego:", "limite_juego", "Valores entre (1 al 5) ", "5"),
-            ("Umbral de probabilidad:", "umbral_probabilidad", "Valores entre (10-100)", "20",),
+            ("Umbral de probabilidad:", "umbral_probabilidad", "Valores entre (10-100)", "50",),
         ]
 
         self.param_entries = {}
