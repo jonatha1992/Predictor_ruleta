@@ -84,9 +84,9 @@ class RuletaPredictorGUI:
         # Tabla de estadísticas (lado derecho)
         stats_frame = ttk.LabelFrame(numeros_stats_frame, text="Estadísticas de Juego")
         stats_frame.pack(side="right", padx=(5, 0))
-        estadisticas = ["Ingresados", "Predecidos", "Aciertos ", "No acertados"]
-        self.stats_tree = ttk.Treeview(stats_frame, columns=("Estadística", "Valor"), show="headings", height=4)
-        self.stats_tree.heading("Estadística", text="Estadística Numeros")
+        estadisticas = ["Nros. Ingresados", "Nros. Predecidos", "Aciertos ", "No acertados", "Efectividad (%)"]
+        self.stats_tree = ttk.Treeview(stats_frame, columns=("Estadística", "Valor"), show="headings", height=5)
+        self.stats_tree.heading("Estadística", text="Estadísticas")
         self.stats_tree.heading("Valor", text="Valor")
         self.stats_tree.column("Estadística", width=160, anchor="w")
         self.stats_tree.column("Valor", width=150, anchor="center")
@@ -94,7 +94,7 @@ class RuletaPredictorGUI:
 
         for tree in [self.stats_tree, self.stats_tree]:
             for stat in estadisticas:
-                tree.insert("", "end", values=(stat, ""))
+                tree.insert("", "end", values=(stat, "0"))
 
         # Frame para ingresar nuevos números
         input_number_frame = ttk.LabelFrame(self.master, text="Ingresar nuevo número")
@@ -303,10 +303,11 @@ class RuletaPredictorGUI:
     def actualizar_estadisticas(self):
         if self.predictor and self.predictor.contador:
             estadisticas = [
-                ("Números Ingresados", self.predictor.contador.ingresados),
-                ("Números Predecidos", self.predictor.contador.jugados),
+                ("Nros Ingresados", self.predictor.contador.ingresados),
+                ("Nros Predecidos", self.predictor.contador.jugados),
                 ("Aciertos ", self.predictor.contador.aciertos_totales),
                 ("No acertados", self.predictor.contador.Sin_salir_nada),
+                ("Efectividad", self.predictor.contador.sacarEfectividad()),
             ]
 
             for item in self.stats_tree.get_children():
@@ -342,7 +343,7 @@ class RuletaPredictorGUI:
         for item in self.stats_tree.get_children():
             self.stats_tree.delete(item)
 
-        stats = ["ingresados", "Predecidos", "Aciertos", "No acertados"]
+        stats = ["Ingresados", "Predecidos", "Aciertos", "No acertados", "Efectividad"]
         for stat in stats:
             self.stats_tree.insert("", "end", values=(stat, ""))
 

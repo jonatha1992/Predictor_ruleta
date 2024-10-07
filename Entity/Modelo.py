@@ -15,7 +15,7 @@ class Modelo:
         self.numeros = self.df["Salidos"].values.tolist()
 
     def crear_y_guardar_modelos(self):
-        for num_anteriores in [3, 4, 5, 6, 7, 8, 9, 10, 11, 12]:
+        for num_anteriores in [10]:
             self.hiperparametros.numerosAnteriores = num_anteriores
             modelo_nombre = f"Model_{self.filebasename}_N{num_anteriores}"
             modelo_path = get_relative_path(f"./Models/{modelo_nombre}.keras")

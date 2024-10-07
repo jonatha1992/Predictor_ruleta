@@ -21,6 +21,21 @@ def get_relative_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 
+# def get_ruleta_types():
+#     data_folder = get_relative_path("Data")
+
+#     if not os.path.exists(data_folder):
+#         raise FileNotFoundError(f"La carpeta Data no existe en {data_folder}")
+
+#     excel_files = [f for f in os.listdir(data_folder) if f.endswith('.xlsx')]
+
+#     if not excel_files:
+#         raise FileNotFoundError("No se encontraron archivos Excel en la carpeta Data")
+
+#     tipos_ruleta = [os.path.splitext(f)[0] for f in excel_files]
+#     return tipos_ruleta
+
+
 def get_ruleta_types():
     data_folder = get_relative_path("Data")
 
@@ -32,7 +47,12 @@ def get_ruleta_types():
     if not excel_files:
         raise FileNotFoundError("No se encontraron archivos Excel en la carpeta Data")
 
-    tipos_ruleta = [os.path.splitext(f)[0] for f in excel_files]
+    tipos_ruleta = [
+        os.path.splitext(f)[0] for f in excel_files if any(
+            keyword in f for keyword in [
+                "Electromecanica",
+                "Crupier",
+                "Electronica"])]
     return tipos_ruleta
 
 

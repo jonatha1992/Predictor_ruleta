@@ -24,6 +24,10 @@ class Predictor:
 
         modelo_nombre = f"Model_{self.filebasename}_N{self.hiperparametros.numerosAnteriores}"
         modelo_path = get_relative_path(f"./Models/{modelo_nombre}.keras")
+
+        if not os.path.exists(modelo_path):
+            modelo = Modelo(filename, hiperparametros)
+            modelo.crear_y_guardar_modelos()
         self.model = tf.keras.models.load_model(modelo_path)
         self.numeros_a_jugar = list()
         self.numeros_predecidos = list()
@@ -194,7 +198,7 @@ class Predictor:
             self.contador,
             self.Parametro_juego,
             self.filename,
-            filename_reporte="Reporte_juego.xlsx",
+            filename_reporte="Data/Reporte_juego.xlsx",
             numeros_anteriores=self.hiperparametros.numerosAnteriores,
         )
 
@@ -203,7 +207,6 @@ class Predictor:
 
     def mostrar_resultados(self):
         resultados = []
-
         for e in self.numeros_predecidos:
             resultados.append(f"El Número {e.numero} fue ACERTADO.")
 

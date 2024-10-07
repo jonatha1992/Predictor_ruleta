@@ -23,8 +23,8 @@ class Contador:
         self.numeros.pop()
         self.numeros_partida.pop()
 
-        if self.ingresados > 7 or self.jugados > 0:
-            self.jugados -= 1
+        # if self.ingresados > 10 or self.jugados > 0:
+        #     self.jugados -= 1
 
     def incrementar_jugados(self):
         self.jugados += 1
@@ -52,6 +52,6 @@ class Contador:
 
     def sacarEfectividad(self):
         if self.jugados == 0:
-            return 0
+            return "0"
         else:
-            return self.aciertos_totales / self.jugados
+            return f"{(self.aciertos_totales / self.jugados) * 100:.0f}%"
