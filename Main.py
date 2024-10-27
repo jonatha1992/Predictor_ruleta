@@ -15,9 +15,6 @@ class RuletaPredictorGUI:
         self.master.geometry("900x700")
         self.predictor = None
         self.create_widgets()
-        # if datetime.date.today() > datetime.date(2024, 9, 19):
-        #     messagebox.showwarning("Fin del período de prueba", "El período de prueba ha finalizado. No se pueden ejecutar predicciones.")
-        #     self.master.destroy()
 
     def create_widgets(self):
         # Nuevo frame para contener input_frame y stats_frame

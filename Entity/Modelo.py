@@ -15,18 +15,19 @@ class Modelo:
         self.numeros = self.df["Salidos"].values.tolist()
 
     def crear_y_guardar_modelos(self):
-        for num_anteriores in [10]:
-            self.hiperparametros.numerosAnteriores = num_anteriores
-            modelo_nombre = f"Model_{self.filebasename}_N{num_anteriores}"
-            modelo_path = get_relative_path(f"./Models/{modelo_nombre}.keras")
+        # Usar el mejor valor encontrado para num_anteriores
+        num_anteriores = 10  # Basado en los resultados de hiperparámetros
+        self.hiperparametros.numerosAnteriores = num_anteriores
+        modelo_nombre = f"Model_{self.filebasename}_N{num_anteriores}"
+        modelo_path = get_relative_path(f"./Models/{modelo_nombre}.keras")
 
-            if not os.path.exists(modelo_path):
-                print(f"Creando modelo: {modelo_nombre}")
-                model = self._crear_modelo()
-                tf.keras.models.save_model(model, modelo_path)
-                print(f"Modelo guardado en {modelo_path}")
-            else:
-                print(f"El modelo {modelo_nombre} ya existe.")
+        if not os.path.exists(modelo_path):
+            print(f"Creando modelo: {modelo_nombre}")
+            model = self._crear_modelo()
+            tf.keras.models.save_model(model, modelo_path)
+            print(f"Modelo guardado en {modelo_path}")
+        else:
+            print(f"El modelo {modelo_nombre} ya existe.")
 
     def _crear_modelo(self):
         secuencias, siguientes_numeros = self._crear_secuencias()
@@ -34,29 +35,38 @@ class Modelo:
 
         model = tf.keras.Sequential(
             [
-                tf.keras.layers.GRU(
-                    self.hiperparametros.gru1, input_shape=(
-                        self.hiperparametros.numerosAnteriores, 1), return_sequences=True, kernel_regularizer=tf.keras.regularizers.l2(
-                        self.hiperparametros.l2_lambda)), tf.keras.layers.BatchNormalization(), tf.keras.layers.Dropout(
-                    self.hiperparametros.dropout_rate), tf.keras.layers.GRU(
-                            self.hiperparametros.gru2, return_sequences=True, kernel_regularizer=tf.keras.regularizers.l2(
-                                self.hiperparametros.l2_lambda)), tf.keras.layers.BatchNormalization(), tf.keras.layers.Dropout(
-                                    self.hiperparametros.dropout_rate), tf.keras.layers.GRU(
-                                        self.hiperparametros.gru3, kernel_regularizer=tf.keras.regularizers.l2(
-                                            self.hiperparametros.l2_lambda)), tf.keras.layers.BatchNormalization(), tf.keras.layers.Dropout(
-                                                self.hiperparametros.dropout_rate), tf.keras.layers.Dense(
-                                                    37, activation="softmax"), ])
+                tf.keras.layers.Embedding(
+                    input_dim=37,
+                    output_dim=48,
+                    input_length=self.hiperparametros.numerosAnteriores),
+                # Mejor embedding_dim = 48
+                tf.keras.layers.LSTM(
+                    self.hiperparametros.gru1, return_sequences=True, kernel_regularizer=tf.keras.regularizers.l2(self.hiperparametros.l2_lambda)),
+                tf.keras.layers.BatchNormalization(),
+                tf.keras.layers.Dropout(self.hiperparametros.dropout_rate),
+                tf.keras.layers.LSTM(
+                    self.hiperparametros.gru2, return_sequences=True, kernel_regularizer=tf.keras.regularizers.l2(self.hiperparametros.l2_lambda)),
+                tf.keras.layers.BatchNormalization(),
+                tf.keras.layers.Dropout(self.hiperparametros.dropout_rate),
+                tf.keras.layers.LSTM(
+                    self.hiperparametros.gru3, kernel_regularizer=tf.keras.regularizers.l2(self.hiperparametros.l2_lambda)),
+                tf.keras.layers.BatchNormalization(),
+                tf.keras.layers.Dropout(self.hiperparametros.dropout_rate),
+                tf.keras.layers.Dense(37, activation="softmax"),
+            ]
+        )
 
-        optimizer = tf.keras.optimizers.Adam(learning_rate=self.hiperparametros.learning_rate)
+        # Usar el mejor optimizador AdamW y tasa de aprendizaje encontrada
+        optimizer = tf.keras.optimizers.AdamW(learning_rate=self.hiperparametros.learning_rate)
         model.compile(loss="categorical_crossentropy", optimizer=optimizer, metrics=["accuracy"])
 
         callbacks = [
             tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=20),
-            tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=20, min_lr=1e-6),
+            tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=40, min_lr=1e-6),
         ]
 
-        model.fit(X_train, y_train, epochs=self.hiperparametros.epoc, batch_size=self.hiperparametros.batchSize,
-                  validation_data=(X_val, y_val), callbacks=callbacks)
+        model.fit(X_train, y_train, epochs=100, batch_size=self.hiperparametros.batchSize,
+                  validation_data=(X_val, y_val), callbacks=callbacks)  # Usar 100 épocas
 
         return model
 
@@ -67,5 +77,5 @@ class Modelo:
             secuencias.append(self.numeros[i: i + self.hiperparametros.numerosAnteriores])
             siguientes_numeros.append(self.numeros[i + self.hiperparametros.numerosAnteriores])
         secuencias = tf.keras.preprocessing.sequence.pad_sequences(np.array(secuencias))
-        siguientes_numeros = tf.keras.utils.to_categorical(np.array(siguientes_numeros))
+        siguientes_numeros = tf.keras.utils.to_categorical(np.array(siguientes_numeros), num_classes=37)
         return secuencias, siguientes_numeros
