@@ -6,6 +6,8 @@ class HiperParametros:
         self.gru1 = 320
         self.gru2 = 128
         self.gru3 = 128
+        self.gru4 = 128
+        self.gru5 = 128
         self.l2_lambda = 0.001
         self.dropout_rate = 0.05
         self.learning_rate = 0.003

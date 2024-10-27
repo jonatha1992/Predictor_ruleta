@@ -51,8 +51,8 @@ class Modelo:
         model.compile(loss="categorical_crossentropy", optimizer=optimizer, metrics=["accuracy"])
 
         callbacks = [
-            tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=20),
-            tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=20, min_lr=1e-6),
+            tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=40),
+            tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=40, min_lr=1e-6),
         ]
 
         model.fit(X_train, y_train, epochs=self.hiperparametros.epoc, batch_size=self.hiperparametros.batchSize,
