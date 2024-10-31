@@ -32,8 +32,6 @@ class MyHyperModel(HyperModel):
         gru1_units = hp.Int("gru1_units", min_value=32, max_value=512, step=32)
         gru2_units = hp.Int("gru2_units", min_value=32, max_value=256, step=32)
         gru3_units = hp.Int("gru3_units", min_value=32, max_value=128, step=32)
-        gru4_units = hp.Int("gru4_units", min_value=32, max_value=64, step=32)
-        gru5_units = hp.Int("gru5_units", min_value=32, max_value=32, step=32)
         num_rnn_layers = hp.Int("num_rnn_layers", min_value=1, max_value=5, step=1)
         rnn_type_choices = ["GRU", "LSTM"]
         optimizer_type = hp.Choice("optimizer", values=["adam", "rmsprop", "adamw"])
@@ -48,11 +46,11 @@ class MyHyperModel(HyperModel):
         )
 
         # Añadir capas RNN
-        gru_units_list = [gru1_units, gru2_units, gru3_units, gru4_units, gru5_units]
+        gru_units_list = [gru1_units, gru2_units, gru3_units]
         rnn_types = []
         for i in range(num_rnn_layers):
             return_sequences = True if i < num_rnn_layers - 1 else False
-            units = gru_units_list[i] if i < len(gru_units_list) else gru5_units
+            units = gru_units_list[i] if i < len(gru_units_list) else gru3_units
             rnn_type = hp.Choice(f"rnn_type_layer_{i+1}", values=rnn_type_choices)
             rnn_types.append(rnn_type)
             if rnn_type == "GRU":
@@ -103,8 +101,6 @@ class MyHyperModel(HyperModel):
             "gru1_units": gru1_units,
             "gru2_units": gru2_units,
             "gru3_units": gru3_units,
-            "gru4_units": gru4_units,
-            "gru5_units": gru5_units,
             "num_rnn_layers": num_rnn_layers,
             "rnn_types": rnn_types,
             "optimizer": optimizer_type
@@ -113,7 +109,7 @@ class MyHyperModel(HyperModel):
         return model
 
     def fit(self, hp, model, x, y, validation_data, callbacks, **kwargs):
-        batch_size = hp.Choice('batch_size', values=[16, 32, 64, 128])
+        batch_size = hp.Choice('batch_size', values=[16, 32, 64, 128, 256, 512])
         return model.fit(
             x,
             y,
@@ -207,7 +203,7 @@ class HyperparameterTuner:
         Realiza la búsqueda de hiperparámetros utilizando Keras Tuner con Bayesian Optimization y Random Search.
         """
         tuning_methods = [
-            {"method": BayesianOptimization, "name": "bayesian_optimization"},
+            # {"method": BayesianOptimization, "name": "bayesian_optimization"},
             {"method": RandomSearch, "name": "random_search"}
         ]
 
@@ -273,7 +269,7 @@ class HyperparameterTuner:
                     tuner = tuning_method["method"](
                         hypermodel=MyHyperModel(input_shape),
                         objective="val_accuracy",
-                        max_trials=300,
+                        max_trials=200,
                         executions_per_trial=1,
                         directory=trial_dir,
                         project_name="hyperparameter_tuning",
@@ -416,8 +412,8 @@ class HyperparameterTuner:
 
 def main():
     # Definir las épocas y números anteriores a probar
-    epocas_probar = [50, 100]  # Puedes ajustar estos valores según tus necesidades
-    numeros_anteriores = [6, 10]  # Ajusta los números anteriores que deseas probar
+    epocas_probar = [100]  # Puedes ajustar estos valores según tus necesidades
+    numeros_anteriores = [10]  # Ajusta los números anteriores que deseas probar
 
     # Nombre del archivo Excel
     filename = "Data/Electromecanica.xlsx"  # Asegúrate de que el nombre sea correcto
