@@ -29,7 +29,7 @@ def ejecutar_simulaciones(datos_simulacion):
         filename = get_excel_file(tipo_ruleta)
         print(f"\nSimulando para {tipo_ruleta}:")
 
-        for numeros_anteriores in [11, 12]:
+        for numeros_anteriores in [4]:
             print(f"  Configuración con {numeros_anteriores} números anteriores")
 
             for cantidad_vecinos in range(0, 5):
@@ -38,8 +38,7 @@ def ejecutar_simulaciones(datos_simulacion):
                         parametros_juego = Parametro_Juego(
                             cantidad_vecinos=cantidad_vecinos,
                             limite_juego=limite_juego,
-                            umbral_probabilidad=umbral_probabilidad,
-                            num_Anteriores=numeros_anteriores
+                            umbral_probabilidad=umbral_probabilidad
                         )
                         hiperParametros = HiperParametros(numerosAnteriores=numeros_anteriores)
                         predictor = Predictor(filename, parametros_juego, hiperParametros)
@@ -63,9 +62,9 @@ def ejecutar_simulaciones(datos_simulacion):
                             "Sin Salir Nada": contador.Sin_salir_nada
                         }
                         resultados.append(resultado)
-                        print(
-                            f" Números Anteriores: {numeros_anteriores}, Predicidos: {contador.jugados}, Aciertos: {contador.acierto_predecidos}, Efectividad: {efectividad:.2f}. "
-                            f"Vecinos: {cantidad_vecinos}, Límite: {limite_juego}, Umbral: {umbral_probabilidad}")
+                        # print(
+                        #     f" Números Anteriores: {numeros_anteriores}, Predicidos: {contador.jugados}, Aciertos: {contador.acierto_predecidos}, Efectividad: {efectividad:.2f}. "
+                        #     f"Vecinos: {cantidad_vecinos}, Límite: {limite_juego}, Umbral: {umbral_probabilidad}")
 
     df_resultados = pd.DataFrame(resultados)
     df_resultados.to_excel("Resultados_simulacion_optimizada.xlsx", index=False)

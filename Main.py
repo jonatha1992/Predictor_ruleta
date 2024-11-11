@@ -43,9 +43,9 @@ class RuletaPredictorGUI:
                 state="disabled")
 
         parameters = [
-            ("Cantidad de vecinos:", "cantidad_vecinos", "Valores entre (1-4) (0 = sin vecinos)", "3",),
-            ("Límite de juego:", "limite_juego", "Valores entre (1 al 5) ", "5"),
-            ("Umbral de probabilidad:", "umbral_probabilidad", "Valores entre (10-100)", "50",),
+            ("Cantidad de vecinos:", "cantidad_vecinos", "Valores entre (1-4) (0 = sin vecinos)", "0",),
+            ("Límite de juego:", "limite_juego", "Valores entre (1 al 15) ", "5"),
+            ("Umbral de probabilidad:", "umbral_probabilidad", "Valores entre (0-100)", "10",),
         ]
 
         self.param_entries = {}
@@ -183,10 +183,10 @@ class RuletaPredictorGUI:
                     value = int(entry.get())
                     if key == "cantidad_vecinos" and not (0 <= value <= 4):
                         raise ValueError("La cantidad de vecinos debe estar entre 0 y 4.")
-                    elif key == "limite_juego" and not (1 <= value <= 5):
-                        raise ValueError("El límite de juego debe estar entre 1 y 5.")
-                    elif key == "umbral_probabilidad" and not (10 <= value <= 100):
-                        raise ValueError("El umbral de probabilidad debe estar entre 20 y 100.")
+                    elif key == "limite_juego" and not (1 <= value <= 15):
+                        raise ValueError("El límite de juego debe estar entre 1 y 15.")
+                    elif key == "umbral_probabilidad" and not (0 <= value <= 100):
+                        raise ValueError("El umbral de probabilidad debe estar entre 0 y 100.")
                     params[key] = value
                 except ValueError as e:
                     messagebox.showerror("Error de entrada", str(e))
@@ -195,7 +195,7 @@ class RuletaPredictorGUI:
             parametros_juego = Parametro_Juego(**params)
             ruleta_tipo = self.ruleta_type.get()
             excel_file = get_excel_file(ruleta_tipo)
-            self.predictor = Predictor(excel_file, parametros_juego, hiperparametros=HiperParametros(numerosAnteriores=10))
+            self.predictor = Predictor(excel_file, parametros_juego, hiperparametros=HiperParametros(numerosAnteriores=7))
             self.limpiar_estadisticas()
             self.result_text.insert(
                 tk.END, f"¡Predictor iniciado correctamente!\n"
