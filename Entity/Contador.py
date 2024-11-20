@@ -54,4 +54,4 @@ class Contador:
         if self.jugados == 0:
             return "0"
         else:
-            return f"{(self.aciertos_totales / self.jugados) * 100:.0f}%"
+            return f"{(self.aciertos_totales / (self.jugados)) * 100:.0f}%"
