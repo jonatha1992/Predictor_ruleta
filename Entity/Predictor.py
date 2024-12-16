@@ -256,45 +256,37 @@ class Predictor:
 
     def actualizar_historial(self, predecidos: list):
         """
-        Agrega todas las predicciones al historial si no están ya presentes.
-        Si ya existen y la probabilidad > 0, la suma.
-        Si la probabilidad es 0 y el número existe en el historial, se elimina.
+        Actualiza el historial con las predicciones.
+        Si ya existen en el historial, suma la probabilidad.
+        Si son nuevos y probabilidad > 0, los agrega.
         """
         for pred in predecidos:
             num = pred["numero"]
             prob = pred["probabilidad"]
 
             if num in self.historial_predecidos:
-                # Si el número ya está en el historial
-                if prob > 0:
-                    # Sumar la probabilidad en el historial
-                    self.historial_predecidos[num].aumentar_probabilidad(prob)
-                else:
-                    # prob = 0, eliminar del historial
-                    self.historial_predecidos[num].probabilidad = prob
+                # Si ya está en el historial, sumar la probabilidad
+                self.historial_predecidos[num].aumentar_probabilidad(prob)
             else:
-                # Si el número no está en el historial y prob > 0, agregarlo
+                # Agregar al historial si probabilidad > 0
                 if prob > 0:
                     self.historial_predecidos[num] = NumeroHistorial(
                         numero=num,
                         probabilidad=prob
                     )
-                # Si prob = 0 y no está en el historial, no hacer nada
 
     def verificar_historial(self):
         """
-        Verifica y actualiza los números a jugar basándose en las predicciones actuales y el historial.
-        Si un número supera el umbral, se agrega a números a jugar.
-        Si la probabilidad es 0, se elimina de ambas listas.
+        Verifica los números en el historial y agrega los que superan el umbral a numeros_a_jugar.
         """
         umbral = self.parametro_juego.umbral_probilidad
 
-        for num, historial_numero in list(self.historial_predecidos.items()):
+        for num, historial_numero in self.historial_predecidos.items():
             prob = historial_numero.probabilidad
 
             if prob >= umbral:
                 if num not in self.numeros_a_jugar:
-                    logging.debug(f"Agregando número {num} a numeros_a_jugar desde el historial con probabilidad {prob}.")
+                    # Agregar al numeros_a_jugar si no está presente
                     self.numeros_a_jugar[num] = NumeroJugar(
                         numero=num,
                         probabilidad=prob,
@@ -302,32 +294,30 @@ class Predictor:
                     )
                     self.contador.incrementar_jugados()
                 else:
-                    logging.debug(
-                        f"Actualizando probabilidad del número {num} en numeros_a_jugar: {self.numeros_a_jugar[num].probabilidad} -> {prob}")
+                    # Actualizar la probabilidad si ya está en numeros_a_jugar
                     self.numeros_a_jugar[num].probabilidad = prob
 
         logging.debug(f"Estado final de numeros_a_jugar: {[f'{num}: {obj.probabilidad}' for num, obj in self.numeros_a_jugar.items()]}")
 
     def verificar_probabilidad_cero(self, predecidos: list):
         """
-        Verifica los números que ya están en numeros_a_jugar. Si en las nuevas predicciones
-        aparecen con probabilidad 0, significa que ya no deben seguir jugándose.
-        Por lo tanto, se pasan a no_salidos y se incrementa el contador, emulando lo que antes
-        hacía la tardancia.
+        Verifica los números que ya están en numeros_a_jugar o historial.
+        Si aparecen con probabilidad 0, los elimina de ambas listas.
         """
         logging.debug("Iniciando verificación de probabilidad cero.")
-        # Crear un conjunto con los números que ahora tienen probabilidad 0 según las nuevas predicciones
         numeros_con_prob_0 = {p["numero"] for p in predecidos if p["probabilidad"] == 0}
         logging.debug(f"Números con probabilidad 0 identificados: {numeros_con_prob_0}")
 
-        # Filtrar aquellos que están en numeros_a_jugar con probabilidad > 0 y ver si ahora son 0
         for num in list(self.numeros_a_jugar.keys()):
             if num in numeros_con_prob_0:
-                logging.debug(f"Procesando número con probabilidad cero: {num}")
-                # Quitar de numeros_a_jugar y pasarlo a no_salidos
                 obj = self.numeros_a_jugar.pop(num)
                 self.no_salidos[num] = obj
                 self.contador.incrementar_supero_limite()
-                logging.debug(f"Número {num} movido a no_salidos. Estado actual de no_salidos: {self.no_salidos.keys()}")
+                logging.debug(f"Número {num} movido a no_salidos.")
+
+        for num in list(self.historial_predecidos.keys()):
+            if num in numeros_con_prob_0:
+                del self.historial_predecidos[num]
+                logging.debug(f"Número {num} eliminado del historial.")
 
         logging.debug("Finalizada verificación de probabilidad cero.")
