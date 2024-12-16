@@ -44,8 +44,8 @@ class RuletaPredictorGUI:
 
         parameters = [
             ("Cantidad de vecinos:", "cantidad_vecinos", "Valores entre (1-4) (0 = sin vecinos)", "0",),
-            ("Límite de juego:", "limite_juego", "Valores entre (1 al 15) ", "5"),
-            ("Umbral de probabilidad:", "umbral_probabilidad", "Valores entre (0-100)", "10",),
+            ("Límite de juego:", "limite_juego", "Valores entre (1 al 15) ", "1"),
+            ("Umbral de probabilidad:", "umbral_probabilidad", "Valores entre (0-100)", "15",),
         ]
 
         self.param_entries = {}
@@ -320,18 +320,20 @@ class RuletaPredictorGUI:
             for item in self.probabilidades_tree.get_children():
                 self.probabilidades_tree.delete(item)
 
-            for numero in self.predictor.numeros_a_jugar:
-                color = colores_ruleta.get(numero.numero, 'black')
-                print(f"Número: {numero.numero}, Color: {color}")  # Debugging
+            for n in self.predictor.numeros_a_jugar.values():
 
-                item = self.probabilidades_tree.insert("", "end", values=(numero.numero,
-                                                                          f"{numero.probabilidad}%",
-                                                                          numero.tardancia,
-                                                                          numero.repetido
-                                                                          ))
+                color = colores_ruleta.get(n.numero, 'black')
 
-                self.probabilidades_tree.tag_configure(f'color_{numero.numero}', foreground=color)
-                self.probabilidades_tree.item(item, tags=(f'color_{numero.numero}',))
+                item = self.probabilidades_tree.insert("", "end", values=(
+                    n.numero,
+                    f"{n.probabilidad}%",
+                    n.tardancia,
+                    n.repetido
+                ))
+
+                self.probabilidades_tree.tag_configure(f'color_{n.numero}', foreground=color)
+                self.probabilidades_tree.item(item, tags=(f'color_{n.numero}',))
+
         else:
             for item in self.probabilidades_tree.get_children():
                 self.probabilidades_tree.delete(item)

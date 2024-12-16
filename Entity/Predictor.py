@@ -1,24 +1,27 @@
+import logging
 import numpy as np
 import pandas as pd
 import tensorflow as tf
 import os
 from Entity.Contador import Contador
 from Entity.Modelo import Modelo
-from Entity.Numero import Numero_jugar
+from Entity.Numero import NumeroJugar, NumeroHistorial  # Asegúrate de que las clases estén en módulos adecuados
 from datetime import datetime
 from Entity.Parametro import HiperParametros, Parametro_Juego
 from Entity.Vecinos import vecino1lugar, vecino2lugar, vecinos3lugar, Vecino4lugar, colores_ruleta
 from Entity.Reporte import Reporte
 from Config import get_relative_path
+import pprint
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 class Predictor:
-    def __init__(self, filename, Parametro_Juego, hiperparametros, **kwargs):
+    def __init__(self, filename: str, parametro_juego: Parametro_Juego, hiperparametros: HiperParametros, **kwargs):
         self.filename = filename
-        self.Parametro_juego = Parametro_Juego
+        self.parametro_juego = parametro_juego
         self.contador = Contador()
         self.df = pd.read_excel(filename, sheet_name="Salidos")
-        self.contador.numeros = self.df["Salidos"].values.tolist()
+        self.contador.numeros = self.df["Salidos"].tolist()
         self.hiperparametros = hiperparametros
         self.filebasename = os.path.splitext(os.path.basename(filename))[0]
 
@@ -28,13 +31,18 @@ class Predictor:
         if not os.path.exists(modelo_path):
             modelo = Modelo(filename, hiperparametros)
             modelo.crear_y_guardar_modelos()
+
         self.model = tf.keras.models.load_model(modelo_path)
-        self.numeros_a_jugar = list()
-        self.numeros_predecidos = list()
-        self.no_salidos = list()
+        self.numeros_a_jugar = {}  # Usar diccionario para eficiencia
+        self.numeros_predecidos = []
+        self.historial_predecidos = {}
+        self.no_salidos = {}
         self.df_nuevo = self.df.copy()
 
-    def verificar_resultados(self, numero):
+    def verificar_resultados(self, numero: int):
+        """
+        Verifica si el número ingresado es un acierto o un vecino.
+        """
         acierto = False
         es_vecino1lugar = False
         es_vecino2lugar = False
@@ -43,43 +51,52 @@ class Predictor:
 
         self.numeros_predecidos = []
         self.contador.incrementar_ingresados(numero)
-        self.no_salidos = []
+        self.no_salidos = {}
 
-        if len(self.numeros_a_jugar) > 0:
-            if any(n.numero == numero and n.probabilidad > 0 for n in self.numeros_a_jugar):
-                numero_acertado = next(n for n in self.numeros_a_jugar if n.numero == numero)
+        if self.numeros_a_jugar:
+            # Verificar aciertos directos
+            if numero in self.numeros_a_jugar and self.numeros_a_jugar[numero].probabilidad > 0:
+                numero_acertado = self.numeros_a_jugar.pop(numero)
                 self.numeros_predecidos.append(numero_acertado)
                 self.contador.incrementar_predecidos()
                 self.df_nuevo.at[len(self.df_nuevo), "Acierto"] = "P"
                 acierto = True
 
-            for vecino in self.numeros_a_jugar:
-                if numero in vecino1lugar[vecino.numero] and self.Parametro_juego.lugares_vecinos >= 1 and vecino.probabilidad > 0:
-                    if vecino not in self.numeros_predecidos:
-                        self.numeros_predecidos.append(vecino)
-                        self.contador.incrementar_aciertos_vecinos_1lugar()
-                        es_vecino1lugar = True
+                # Eliminar también del historial ya que el número salió
+                if numero in self.historial_predecidos:
+                    del self.historial_predecidos[numero]
 
-                if numero in vecino2lugar[vecino.numero] and self.Parametro_juego.lugares_vecinos >= 2 and vecino.probabilidad > 0:
-                    if vecino not in self.numeros_predecidos:
-                        self.numeros_predecidos.append(vecino)
-                        self.contador.incrementar_aciertos_vecinos_2lugar()
-                        es_vecino2lugar = True
+            # Verificar vecinos
+            for vecino_numero, vecino_obj in list(self.numeros_a_jugar.items()):
+                if (numero in vecino1lugar.get(vecino_numero, []) and self.parametro_juego.lugares_vecinos >= 1 and vecino_obj.probabilidad > 0):
+                    self.numeros_predecidos.append(vecino_obj)
+                    self.contador.incrementar_aciertos_vecinos_1lugar()
+                    es_vecino1lugar = True
 
-                if numero in vecinos3lugar[vecino.numero] and self.Parametro_juego.lugares_vecinos >= 3 and vecino.probabilidad > 0:
-                    if vecino not in self.numeros_predecidos:
-                        self.numeros_predecidos.append(vecino)
-                        self.contador.incrementar_aciertos_vecinos_3lugar()
-                        es_vecino3lugar = True
+                if (numero in vecino2lugar.get(vecino_numero, []) and self.parametro_juego.lugares_vecinos >= 2 and vecino_obj.probabilidad > 0):
+                    self.numeros_predecidos.append(vecino_obj)
+                    self.contador.incrementar_aciertos_vecinos_2lugar()
+                    es_vecino2lugar = True
 
-                if numero in Vecino4lugar[vecino.numero] and self.Parametro_juego.lugares_vecinos >= 4 and vecino.probabilidad > 0:
-                    if vecino not in self.numeros_predecidos:
-                        self.numeros_predecidos.append(vecino)
-                        self.contador.incrementar_aciertos_vecinos_4lugar()
-                        es_vecino4lugar = True
+                if (numero in vecinos3lugar.get(vecino_numero, []) and self.parametro_juego.lugares_vecinos >= 3 and vecino_obj.probabilidad > 0):
+                    self.numeros_predecidos.append(vecino_obj)
+                    self.contador.incrementar_aciertos_vecinos_3lugar()
+                    es_vecino3lugar = True
 
-            self.numeros_a_jugar = [n for n in self.numeros_a_jugar if n not in self.numeros_predecidos]
+                if (numero in Vecino4lugar.get(vecino_numero, []) and self.parametro_juego.lugares_vecinos >= 4 and vecino_obj.probabilidad > 0):
+                    self.numeros_predecidos.append(vecino_obj)
+                    self.contador.incrementar_aciertos_vecinos_4lugar()
+                    es_vecino4lugar = True
 
+                # Eliminar el vecino si fue predecido
+                if vecino_obj in self.numeros_predecidos:
+                    del self.numeros_a_jugar[vecino_numero]
+
+                    # Si este vecino también estaba en el historial, eliminarlo
+                    if vecino_numero in self.historial_predecidos:
+                        del self.historial_predecidos[vecino_numero]
+
+            # Actualizar columnas de vecinos en el DataFrame
             if es_vecino1lugar:
                 self.df_nuevo.at[len(self.df_nuevo), "V1L"] = "V1L"
             if es_vecino2lugar:
@@ -89,131 +106,228 @@ class Predictor:
             if es_vecino4lugar:
                 self.df_nuevo.at[len(self.df_nuevo), "V4L"] = "V4L"
 
-        self.Verificar_limites_numeros()
+        # self.verificar_limites_numeros()
 
-        if len(self.numeros_predecidos) > 0:
+        if self.numeros_predecidos:
             self.contador.incrementar_aciertos_totales(len(self.numeros_predecidos))
 
-    def Verificar_limites_numeros(self):
-        objetos_a_eliminar = []
-        for obj in self.numeros_a_jugar:
-            if obj.tardancia == self.Parametro_juego.limite_juego:
-                objetos_a_eliminar.append(obj)
+    def verificar_limites_numeros(self):
+        """
+        Verifica y elimina números que han alcanzado el límite de tardancia.
+        """
+        objetos_a_eliminar = [num for num, obj in self.numeros_a_jugar.items() if obj.tardancia >= self.parametro_juego.limite_juego]
 
-        for obj in objetos_a_eliminar:
-            self.no_salidos.append(obj)
-            self.numeros_a_jugar.remove(obj)
-
-        for obj in self.no_salidos:
+        for num in objetos_a_eliminar:
+            obj = self.numeros_a_jugar.pop(num)
+            self.no_salidos[num] = obj
             self.contador.incrementar_supero_limite()
 
-    def actualizar_dataframe(self, numero_ingresado):
-        self.df_nuevo.loc[len(self.df_nuevo) + 1, "Salidos"] = numero_ingresado
-        resultados_str = ",".join([str(obj) for obj in self.numeros_a_jugar])
-        predecidos_str = ",".join([str(obj) for obj in self.numeros_predecidos])
-        nosalidos_str = ",".join([str(obj) for obj in self.no_salidos])
-        self.df_nuevo.loc[len(self.df_nuevo), "Resultados"] = resultados_str
-        self.df_nuevo.loc[len(self.df_nuevo), "Acertados"] = predecidos_str
-        self.df_nuevo.loc[len(self.df_nuevo), "No salidos"] = nosalidos_str
-        self.df_nuevo.loc[len(self.df_nuevo), "Orden"] = self.contador.ingresados
+    def actualizar_dataframe(self, numero_ingresado: int):
+        """
+        Actualiza el DataFrame con el número ingresado y los resultados actuales.
+        """
+        nueva_fila = {
+            "Salidos": numero_ingresado,
+            "Resultados": ",".join([str(obj) for obj in self.numeros_a_jugar.values()]),
+            "Acertados": ",".join([str(obj) for obj in self.numeros_predecidos]),
+            "No salidos": ",".join([str(obj) for obj in self.no_salidos.values()]),
+            "Orden": self.contador.ingresados
+        }
+        # self.df_nuevo = self.df_nuevo.append(nueva_fila, ignore_index=True)  # type: ignore
+        self.df_nuevo = pd.concat([self.df_nuevo, pd.DataFrame([nueva_fila])], ignore_index=True)
 
     def guardar_reporte(self):
+        """
+        Guarda el reporte en un archivo Excel.
+        """
         reporte = Reporte()
         reporte.generar_reporte(
             self.contador,
-            self.Parametro_juego,
+            self.parametro_juego,
             self.filename,
             filename_reporte="Data/Reporte_juego.xlsx",
             numeros_anteriores=self.hiperparametros.numerosAnteriores,
         )
 
     def guardar_excel(self):
+        """
+        Guarda el DataFrame actualizado en el archivo Excel original.
+        """
         self.df_nuevo.to_excel(self.filename, sheet_name="Salidos", index=False)
 
-    def mostrar_resultados(self):
+    def mostrar_resultados(self) -> str:
+        """
+        Muestra los resultados de los números predecidos y no salidos.
+        """
         resultados = []
         for e in self.numeros_predecidos:
             resultados.append(
-                f" Núm {e.numero} fue ACERTADO, Probabilidad:  {e.probabilidad}, Tardancia: {e.tardancia} , repetidos: {e.repetido}")
+                f"Núm {e.numero} fue ACERTADO, Probabilidad: {e.probabilidad}, Tardancia: {e.tardancia}, Repetidos: {e.repetido}"
+            )
 
-        if len(self.no_salidos) > 0:
-            for e in self.no_salidos:
+        if self.no_salidos:
+            for e in self.no_salidos.values():
                 resultados.append(
-                    f"Núm {e.numero} NO SALIO, Probabilidad: {e.probabilidad}, Tardancia: {e.tardancia}, repetidos: {e.repetido}")
+                    f"Núm {e.numero} NO SALIÓ, Probabilidad: {e.probabilidad}, Tardancia: {e.tardancia}, Repetidos: {e.repetido}"
+                )
 
         return "\n".join(resultados)
 
     def borrar(self):
+        """
+        Borra el último número ingresado y actualiza las listas y el DataFrame.
+        """
         if self.contador.numeros:
             self.contador.borrar_ultimo_numero()
             ultimo = self.contador.numeros[-1]
             self.df_nuevo = self.df_nuevo[:-1]  # Eliminar la última fila del DataFrame nuevo
 
-            if len(self.numeros_a_jugar) > 0:
+            if self.numeros_a_jugar:
                 self.numeros_a_jugar.clear()
 
-        print(f"Último número borrado {ultimo}")
-
-    def obtener_probabilidad_vecinos(self, numero):
-        return 0.7  # Esta función podría ampliarse según los datos históricos o la importancia de vecinos
+            print(f"Último número borrado {ultimo}")
 
     def predecir(self):
+        """
+        Genera predicciones a partir del modelo, actualiza el historial y los números a jugar.
+        """
         if self.contador.ingresados > self.hiperparametros.numerosAnteriores:
+            # Crear la secuencia de entrada para el modelo
             secuencia_entrada = np.array(
                 self.contador.numeros[-self.hiperparametros.numerosAnteriores:]
             ).reshape(1, self.hiperparametros.numerosAnteriores, 1)
             predicciones = self.model.predict(secuencia_entrada, verbose=0)
 
-            # Filtrar predicciones basadas en el umbral de probabilidad
-            predicciones_filtradas = [
+            # Convertir las predicciones en un formato manejable
+            predecidos = [
                 {
                     "numero": i,
-                    "probabilidad": prob,
-                    "vecino": self.obtener_probabilidad_vecinos(i),
+                    "probabilidad": prob
                 }
-                for i, prob in enumerate(predicciones[0]) if prob > 0.10
+                for i, prob in enumerate(predicciones[0])
             ]
 
-            # Ponderar la probabilidad combinada
-            for pred in predicciones_filtradas:
-                pred["probabilidad_combinada"] = (
-                    0.7 * pred["probabilidad"] +  # Mayor peso para la predicción inicial
-                    0.3 * pred["vecino"]          # Peso para los vecinos más cercanos
-                )
+            # Redondear probabilidades y procesar los números
+            for pred in predecidos:
+                pred["probabilidad"] = int(round(pred["probabilidad"], 2) * 100)
 
-            # Ordenar predicciones por probabilidad combinada descendente
-            predecidos = sorted(
-                predicciones_filtradas,
-                key=lambda x: x["probabilidad_combinada"],
+            # Marcar los números actuales como jugados
+            for numero_jugado in self.numeros_a_jugar.values():
+                numero_jugado.jugar()
+
+            # Ordenar historial_predecidos por probabilidad descendente
+            self.historial_predecidos = dict(sorted(
+                self.historial_predecidos.items(),
+                key=lambda item: item[1].numero,
                 reverse=True
-            )
-            print(f"Predecidos: {predecidos}")
-            for numero_jugado in self.numeros_a_jugar:
-                numero_jugado.Jugar()
+            ))
 
-            self.verificar_predecidos(predicciones, predecidos)
+            if self.historial_predecidos:
+                print("Historial antes:")
+                for num in self.historial_predecidos.values():
+                    print(f"numero {num.numero}, probabilidad {num.probabilidad}")
+                    # Actualizar el historial con las predicciones actuales
 
-    def verificar_predecidos(self, predicciones, predecidos):
+            self.actualizar_historial(predecidos)
+
+            # Verificar y actualizar números a jugar según las predicciones y el historial
+            self.verificar_historial()
+            self.verificar_probabilidad_cero(predecidos)
+
+            print("Predicciones:")
+            pprint.pprint(predecidos)
+
+            self.historial_predecidos = dict(sorted(
+                self.historial_predecidos.items(),
+                key=lambda item: item[1].numero,
+                reverse=True
+            ))
+
+            # Ordenar números a jugar por probabilidad descendente
+            self.numeros_a_jugar = dict(sorted(
+                self.numeros_a_jugar.items(),
+                key=lambda item: item[1].numero,
+                reverse=True
+            ))
+
+            print("Historial posterior:")
+            for num in self.historial_predecidos.values():
+                print(f"numero {num.numero}, probabilidad {num.probabilidad}")
+
+    def actualizar_historial(self, predecidos: list):
+        """
+        Agrega todas las predicciones al historial si no están ya presentes.
+        Si ya existen y la probabilidad > 0, la suma.
+        Si la probabilidad es 0 y el número existe en el historial, se elimina.
+        """
         for pred in predecidos:
             num = pred["numero"]
-            probabilidad_redondeada = int(round(pred["probabilidad_combinada"], 2) * 100)
-            if probabilidad_redondeada >= self.Parametro_juego.umbral_probilidad:
-                if any(n.numero == num for n in self.numeros_a_jugar):
-                    for n_a_jugar in self.numeros_a_jugar:
-                        if n_a_jugar.numero == num:
-                            n_a_jugar.Aumentar_probailidad(probabilidad_redondeada)
-                else:
-                    nuevo_numero = Numero_jugar(
-                        num,
-                        probabilidad_redondeada,
-                        self.Parametro_juego.lugares_vecinos
-                    )
-                    self.numeros_a_jugar.append(nuevo_numero)
-                    self.contador.incrementar_jugados()
+            prob = pred["probabilidad"]
 
-        # Ordena los numeros_a_jugar por probabilidad descendente
-        self.numeros_a_jugar = sorted(
-            self.numeros_a_jugar,
-            key=lambda x: x.probabilidad,
-            reverse=True
-        )
+            if num in self.historial_predecidos:
+                # Si el número ya está en el historial
+                if prob > 0:
+                    # Sumar la probabilidad en el historial
+                    self.historial_predecidos[num].aumentar_probabilidad(prob)
+                else:
+                    # prob = 0, eliminar del historial
+                    self.historial_predecidos[num].probabilidad = prob
+            else:
+                # Si el número no está en el historial y prob > 0, agregarlo
+                if prob > 0:
+                    self.historial_predecidos[num] = NumeroHistorial(
+                        numero=num,
+                        probabilidad=prob
+                    )
+                # Si prob = 0 y no está en el historial, no hacer nada
+
+    def verificar_historial(self):
+        """
+        Verifica y actualiza los números a jugar basándose en las predicciones actuales y el historial.
+        Si un número supera el umbral, se agrega a números a jugar.
+        Si la probabilidad es 0, se elimina de ambas listas.
+        """
+        umbral = self.parametro_juego.umbral_probilidad
+
+        for num, historial_numero in list(self.historial_predecidos.items()):
+            prob = historial_numero.probabilidad
+
+            if prob >= umbral:
+                if num not in self.numeros_a_jugar:
+                    logging.debug(f"Agregando número {num} a numeros_a_jugar desde el historial con probabilidad {prob}.")
+                    self.numeros_a_jugar[num] = NumeroJugar(
+                        numero=num,
+                        probabilidad=prob,
+                        vecinos=self.parametro_juego.lugares_vecinos
+                    )
+                    self.contador.incrementar_jugados()
+                else:
+                    logging.debug(
+                        f"Actualizando probabilidad del número {num} en numeros_a_jugar: {self.numeros_a_jugar[num].probabilidad} -> {prob}")
+                    self.numeros_a_jugar[num].probabilidad = prob
+
+        logging.debug(f"Estado final de numeros_a_jugar: {[f'{num}: {obj.probabilidad}' for num, obj in self.numeros_a_jugar.items()]}")
+
+    def verificar_probabilidad_cero(self, predecidos: list):
+        """
+        Verifica los números que ya están en numeros_a_jugar. Si en las nuevas predicciones
+        aparecen con probabilidad 0, significa que ya no deben seguir jugándose.
+        Por lo tanto, se pasan a no_salidos y se incrementa el contador, emulando lo que antes
+        hacía la tardancia.
+        """
+        logging.debug("Iniciando verificación de probabilidad cero.")
+        # Crear un conjunto con los números que ahora tienen probabilidad 0 según las nuevas predicciones
+        numeros_con_prob_0 = {p["numero"] for p in predecidos if p["probabilidad"] == 0}
+        logging.debug(f"Números con probabilidad 0 identificados: {numeros_con_prob_0}")
+
+        # Filtrar aquellos que están en numeros_a_jugar con probabilidad > 0 y ver si ahora son 0
+        for num in list(self.numeros_a_jugar.keys()):
+            if num in numeros_con_prob_0:
+                logging.debug(f"Procesando número con probabilidad cero: {num}")
+                # Quitar de numeros_a_jugar y pasarlo a no_salidos
+                obj = self.numeros_a_jugar.pop(num)
+                self.no_salidos[num] = obj
+                self.contador.incrementar_supero_limite()
+                logging.debug(f"Número {num} movido a no_salidos. Estado actual de no_salidos: {self.no_salidos.keys()}")
+
+        logging.debug("Finalizada verificación de probabilidad cero.")

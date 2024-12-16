@@ -4,7 +4,6 @@ import pandas as pd
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from Config import get_relative_path
-from Entity.Numero import Numero_jugar
 from Entity.Vecinos import colores_ruleta, vecino1lugar, vecino2lugar, vecinos3lugar, Vecino4lugar
 
 
@@ -93,17 +92,17 @@ class Modelo:
         siguientes_numeros = tf.keras.utils.to_categorical(np.array(siguientes_numeros), num_classes=37)
         return secuencias, siguientes_numeros
 
-    def jugar_numero(self, numero):
-        # Verificar si `numero` tiene una probabilidad combinada antes de intentar usarlo
-        probabilidad = next((pred["probabilidad_combinada"] for pred in self.numeros_a_jugar if pred["numero"] == numero), None)
-        if probabilidad is None:
-            print(f"Advertencia: El número {numero} no tiene una probabilidad combinada calculada.")
-            return  # Salir si el número no tiene probabilidad calculada
+    # def jugar_numero(self, numero):
+    #     # Verificar si `numero` tiene una probabilidad combinada antes de intentar usarlo
+    #     probabilidad = next((pred["probabilidad_combinada"] for pred in self.numeros_a_jugar if pred["numero"] == numero), None)
+    #     if probabilidad is None:
+    #         print(f"Advertencia: El número {numero} no tiene una probabilidad combinada calculada.")
+    #         return  # Salir si el número no tiene probabilidad calculada
 
-        nuevo_numero = Numero_jugar(
-            numero,
-            probabilidad,
-            self.Parametro_juego.lugares_vecinos
-        )
-        self.numeros_a_jugar.append(nuevo_numero)
-        self.contador.incrementar_jugados()
+    #     nuevo_numero = NumeroJugar(
+    #         numero,
+    #         probabilidad,
+    #         self.Parametro_juego.lugares_vecinos
+    #     )
+    #     self.numeros_a_jugar.append(nuevo_numero)
+    #     self.contador.incrementar_jugados()
