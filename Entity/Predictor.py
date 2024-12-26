@@ -12,6 +12,7 @@ from Entity.Vecinos import vecino1lugar, vecino2lugar, vecinos3lugar, Vecino4lug
 from Entity.Reporte import Reporte
 from Config import get_relative_path
 import pprint
+
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
@@ -40,9 +41,10 @@ class Predictor:
         self.df_nuevo = self.df.copy()
 
     def verificar_resultados(self, numero: int):
-        """
-        Verifica si el número ingresado es un acierto o un vecino.
-        """
+        # Obtener el índice de la última fila del DataFrame
+        indice_actual = len(self.df_nuevo) - 1
+
+        # Verificar aciertos y vecinos
         acierto = False
         es_vecino1lugar = False
         es_vecino2lugar = False
@@ -59,54 +61,46 @@ class Predictor:
                 numero_acertado = self.numeros_a_jugar.pop(numero)
                 self.numeros_predecidos.append(numero_acertado)
                 self.contador.incrementar_predecidos()
-                self.df_nuevo.at[len(self.df_nuevo), "Acierto"] = "P"
                 acierto = True
-
-                # Eliminar también del historial ya que el número salió
                 if numero in self.historial_predecidos:
                     del self.historial_predecidos[numero]
 
             # Verificar vecinos
             for vecino_numero, vecino_obj in list(self.numeros_a_jugar.items()):
-                if (numero in vecino1lugar.get(vecino_numero, []) and self.parametro_juego.lugares_vecinos >= 1 and vecino_obj.probabilidad > 0):
+                if numero in vecino1lugar.get(vecino_numero, []) and self.parametro_juego.lugares_vecinos >= 1:
                     self.numeros_predecidos.append(vecino_obj)
                     self.contador.incrementar_aciertos_vecinos_1lugar()
                     es_vecino1lugar = True
 
-                if (numero in vecino2lugar.get(vecino_numero, []) and self.parametro_juego.lugares_vecinos >= 2 and vecino_obj.probabilidad > 0):
+                if numero in vecino2lugar.get(vecino_numero, []) and self.parametro_juego.lugares_vecinos >= 2:
                     self.numeros_predecidos.append(vecino_obj)
                     self.contador.incrementar_aciertos_vecinos_2lugar()
                     es_vecino2lugar = True
 
-                if (numero in vecinos3lugar.get(vecino_numero, []) and self.parametro_juego.lugares_vecinos >= 3 and vecino_obj.probabilidad > 0):
+                if numero in vecinos3lugar.get(vecino_numero, []) and self.parametro_juego.lugares_vecinos >= 3:
                     self.numeros_predecidos.append(vecino_obj)
                     self.contador.incrementar_aciertos_vecinos_3lugar()
                     es_vecino3lugar = True
 
-                if (numero in Vecino4lugar.get(vecino_numero, []) and self.parametro_juego.lugares_vecinos >= 4 and vecino_obj.probabilidad > 0):
+                if numero in Vecino4lugar.get(vecino_numero, []) and self.parametro_juego.lugares_vecinos >= 4:
                     self.numeros_predecidos.append(vecino_obj)
                     self.contador.incrementar_aciertos_vecinos_4lugar()
                     es_vecino4lugar = True
 
-                # Eliminar el vecino si fue predecido
                 if vecino_obj in self.numeros_predecidos:
                     del self.numeros_a_jugar[vecino_numero]
-
-                    # Si este vecino también estaba en el historial, eliminarlo
                     if vecino_numero in self.historial_predecidos:
                         del self.historial_predecidos[vecino_numero]
 
-            # Actualizar columnas de vecinos en el DataFrame
-            if es_vecino1lugar:
-                self.df_nuevo.at[len(self.df_nuevo), "V1L"] = "V1L"
-            if es_vecino2lugar:
-                self.df_nuevo.at[len(self.df_nuevo), "V2L"] = "V2L"
-            if es_vecino3lugar:
-                self.df_nuevo.at[len(self.df_nuevo), "V3L"] = "V3L"
-            if es_vecino4lugar:
-                self.df_nuevo.at[len(self.df_nuevo), "V4L"] = "V4L"
-
-        # self.verificar_limites_numeros()
+        # Actualizar la fila existente
+        self.df_nuevo.at[indice_actual, "Acierto"] = "P" if acierto else ""
+        self.df_nuevo.at[indice_actual, "V1L"] = "V1L" if es_vecino1lugar else ""
+        self.df_nuevo.at[indice_actual, "V2L"] = "V2L" if es_vecino2lugar else ""
+        self.df_nuevo.at[indice_actual, "V3L"] = "V3L" if es_vecino3lugar else ""
+        self.df_nuevo.at[indice_actual, "V4L"] = "V4L" if es_vecino4lugar else ""
+        self.df_nuevo.at[indice_actual, "Resultados"] = ",".join([str(obj) for obj in self.numeros_predecidos])
+        self.df_nuevo.at[indice_actual, "Acertados"] = ",".join([str(obj) for obj in self.numeros_predecidos])
+        self.df_nuevo.at[indice_actual, "No salidos"] = ",".join([str(obj) for obj in self.no_salidos.values()])
 
         if self.numeros_predecidos:
             self.contador.incrementar_aciertos_totales(len(self.numeros_predecidos))
@@ -127,11 +121,9 @@ class Predictor:
         Actualiza el DataFrame con el número ingresado y los resultados actuales.
         """
         nueva_fila = {
+            "Orden": self.contador.ingresados,
             "Salidos": numero_ingresado,
             "Resultados": ",".join([str(obj) for obj in self.numeros_a_jugar.values()]),
-            "Acertados": ",".join([str(obj) for obj in self.numeros_predecidos]),
-            "No salidos": ",".join([str(obj) for obj in self.no_salidos.values()]),
-            "Orden": self.contador.ingresados
         }
         # self.df_nuevo = self.df_nuevo.append(nueva_fila, ignore_index=True)  # type: ignore
         self.df_nuevo = pd.concat([self.df_nuevo, pd.DataFrame([nueva_fila])], ignore_index=True)
@@ -254,26 +246,64 @@ class Predictor:
             for num in self.historial_predecidos.values():
                 print(f"numero {num.numero}, probabilidad {num.probabilidad}")
 
+    # def actualizar_historial(self, predecidos: list):
+    #     """
+    #     Actualiza el historial con las predicciones.
+    #     Si ya existen en el historial, suma la probabilidad.
+    #     Si son nuevos y probabilidad > 0, los agrega.
+    #     """
+    #     for pred in predecidos:
+    #         num = pred["numero"]
+    #         prob = pred["probabilidad"]
+
+    #         if num in self.historial_predecidos:
+    #             # Si ya está en el historial, sumar la probabilidad
+    #             self.historial_predecidos[num].aumentar_probabilidad(prob)
+    #         else:
+    #             # Agregar al historial si probabilidad > 0
+    #             if prob > 0:
+    #                 self.historial_predecidos[num] = NumeroHistorial(
+    #                     numero=num,
+    #                     probabilidad=prob
+    #                 )
+
     def actualizar_historial(self, predecidos: list):
-        """
-        Actualiza el historial con las predicciones.
-        Si ya existen en el historial, suma la probabilidad.
-        Si son nuevos y probabilidad > 0, los agrega.
-        """
         for pred in predecidos:
             num = pred["numero"]
             prob = pred["probabilidad"]
 
             if num in self.historial_predecidos:
-                # Si ya está en el historial, sumar la probabilidad
-                self.historial_predecidos[num].aumentar_probabilidad(prob)
+                self.historial_predecidos[num].actualizar_probabilidad(prob)
             else:
-                # Agregar al historial si probabilidad > 0
                 if prob > 0:
                     self.historial_predecidos[num] = NumeroHistorial(
                         numero=num,
                         probabilidad=prob
                     )
+
+    # def verificar_historial(self):
+    #     """
+    #     Verifica los números en el historial y agrega los que superan el umbral a numeros_a_jugar.
+    #     """
+    #     umbral = self.parametro_juego.umbral_probilidad
+
+    #     for num, historial_numero in self.historial_predecidos.items():
+    #         prob = historial_numero.probabilidad
+
+    #         if prob >= umbral:
+    #             if num not in self.numeros_a_jugar:
+    #                 # Agregar al numeros_a_jugar si no está presente
+    #                 self.numeros_a_jugar[num] = NumeroJugar(
+    #                     numero=num,
+    #                     probabilidad=prob,
+    #                     vecinos=self.parametro_juego.lugares_vecinos,
+    #                     repetido=historial_numero.repetido
+    #                 )
+    #                 self.contador.incrementar_jugados()
+    #             else:
+    #                 # Actualizar la probabilidad si ya está en numeros_a_jugar
+    #                 self.numeros_a_jugar[num].probabilidad = prob
+    #                 self.numeros_a_jugar[num].repetido += 1
 
     def verificar_historial(self):
         """
@@ -290,12 +320,13 @@ class Predictor:
                     self.numeros_a_jugar[num] = NumeroJugar(
                         numero=num,
                         probabilidad=prob,
-                        vecinos=self.parametro_juego.lugares_vecinos
+                        vecinos=self.parametro_juego.lugares_vecinos,
+                        repetido=historial_numero.repetido
                     )
                     self.contador.incrementar_jugados()
                 else:
-                    # Actualizar la probabilidad si ya está en numeros_a_jugar
-                    self.numeros_a_jugar[num].probabilidad = prob
+                    # Actualizar usando el método de la clase
+                    self.numeros_a_jugar[num].actualizar_probabilidad(prob)
 
         logging.debug(f"Estado final de numeros_a_jugar: {[f'{num}: {obj.probabilidad}' for num, obj in self.numeros_a_jugar.items()]}")
 
