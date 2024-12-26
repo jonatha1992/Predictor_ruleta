@@ -320,7 +320,7 @@ class RuletaPredictorGUI:
             for item in self.probabilidades_tree.get_children():
                 self.probabilidades_tree.delete(item)
 
-            for n in self.predictor.numeros_a_jugar.values():
+            for n in self.predictor.numeros_a_jugar:
 
                 color = colores_ruleta.get(n.numero, 'black')
 
