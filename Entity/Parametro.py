@@ -18,12 +18,12 @@ class Parametro_Juego:
     def __init__(
         self,
         cantidad_vecinos,
-        limite_juego,
+        limite_tardancia,
         umbral_probabilidad,
         **kwargs
     ):
         # Parametros juegos
-        self.limite_juego = limite_juego
+        self.limite_tardancia = limite_tardancia
         self.lugares_vecinos = cantidad_vecinos
         # self.numerosAnteriores = 4
         self.numeros_a_predecir = 10

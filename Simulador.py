@@ -37,7 +37,7 @@ def ejecutar_simulaciones(datos_simulacion):
                     for umbral_probabilidad in range(10, 101, 10):
                         parametros_juego = Parametro_Juego(
                             cantidad_vecinos=cantidad_vecinos,
-                            limite_juego=limite_juego,
+                            limite_tardancia=limite_juego,
                             umbral_probabilidad=umbral_probabilidad
                         )
                         hiperParametros = HiperParametros(numerosAnteriores=numeros_anteriores)

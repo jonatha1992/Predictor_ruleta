@@ -34,97 +34,27 @@ class Predictor:
             modelo.crear_y_guardar_modelos()
 
         self.model = tf.keras.models.load_model(modelo_path)
-        self.numeros_predecidos = []
+        self.numeros_acertados = []
         self.historial_predecidos = []
         self.numeros_a_jugar = []
 
         self.no_salidos = {}
         self.df_nuevo = self.df.copy()
 
-    def verificar_resultados(self, numero: int):
-        # Obtener el índice de la última fila del DataFrame
-        indice_actual = len(self.df_nuevo) - 1
-
-        # Verificar aciertos y vecinos
-        acierto = False
-        es_vecino1lugar = False
-        es_vecino2lugar = False
-        es_vecino3lugar = False
-        es_vecino4lugar = False
-
-        self.numeros_predecidos = []
-        self.contador.incrementar_ingresados(numero)
-        self.no_salidos = {}
-
-        if self.numeros_a_jugar:
-            # Buscar el índice del número en la lista si probabilidad > 0
-            indice_a_jugar = None
-            for i, n in enumerate(self.numeros_a_jugar):
-                if n.numero == numero and n.probabilidad > 0:
-                    indice_a_jugar = i
-                    break
-
-            if indice_a_jugar is not None:
-                numero_acertado = self.numeros_a_jugar.pop(indice_a_jugar)
-                self.numeros_predecidos.append(numero_acertado)
-                self.contador.incrementar_predecidos()
-                acierto = True
-
-                # Quitar también de historial_predecidos si está
-                indice_historial = None
-                for j, h in enumerate(self.historial_predecidos):
-                    if h.numero == numero:
-                        indice_historial = j
-                        break
-                if indice_historial is not None:
-                    self.historial_predecidos.pop(indice_historial)
-
-            # Verificar vecinos
-            for vecino_obj in self.numeros_a_jugar[:]:
-                vecino_numero = vecino_obj.numero
-                if numero in vecino1lugar.get(vecino_numero, []) and self.parametro_juego.lugares_vecinos >= 1:
-                    self.numeros_predecidos.append(vecino_obj)
-                    self.contador.incrementar_aciertos_vecinos_1lugar()
-                    es_vecino1lugar = True
-
-                if numero in vecino2lugar.get(vecino_numero, []) and self.parametro_juego.lugares_vecinos >= 2:
-                    self.numeros_predecidos.append(vecino_obj)
-                    self.contador.incrementar_aciertos_vecinos_2lugar()
-                    es_vecino2lugar = True
-
-                if numero in vecinos3lugar.get(vecino_numero, []) and self.parametro_juego.lugares_vecinos >= 3:
-                    self.numeros_predecidos.append(vecino_obj)
-                    self.contador.incrementar_aciertos_vecinos_3lugar()
-                    es_vecino3lugar = True
-
-                if numero in Vecino4lugar.get(vecino_numero, []) and self.parametro_juego.lugares_vecinos >= 4:
-                    self.numeros_predecidos.append(vecino_obj)
-                    self.contador.incrementar_aciertos_vecinos_4lugar()
-                    es_vecino4lugar = True
-
-        # Actualizar la fila existente
-        self.df_nuevo.at[indice_actual, "Acierto"] = "P" if acierto else ""
-        self.df_nuevo.at[indice_actual, "V1L"] = "V1L" if es_vecino1lugar else ""
-        self.df_nuevo.at[indice_actual, "V2L"] = "V2L" if es_vecino2lugar else ""
-        self.df_nuevo.at[indice_actual, "V3L"] = "V3L" if es_vecino3lugar else ""
-        self.df_nuevo.at[indice_actual, "V4L"] = "V4L" if es_vecino4lugar else ""
-        self.df_nuevo.at[indice_actual, "Resultados"] = ",".join([str(obj) for obj in self.numeros_predecidos])
-        self.df_nuevo.at[indice_actual, "Acertados"] = ",".join([str(obj) for obj in self.numeros_predecidos])
-        self.df_nuevo.at[indice_actual, "No salidos"] = ",".join([str(obj) for obj in self.no_salidos.values()])
-
-        if self.numeros_predecidos:
-            self.contador.incrementar_aciertos_totales(len(self.numeros_predecidos))
-
     def verificar_limites_numeros(self):
         """
         Verifica y elimina números que han alcanzado el límite de tardancia.
         """
-        objetos_a_eliminar = [num for num, obj in self.numeros_a_jugar if obj.tardancia >= self.parametro_juego.limite_juego]
+        numeros_a_eliminar = [num for num in self.numeros_a_jugar if num.tardancia >= self.parametro_juego.limite_tardancia]
+        print(f"Números a eliminar por tardancia: {[num.numero for num in numeros_a_eliminar]}")
 
-        for num in objetos_a_eliminar:
-            obj = self.numeros_a_jugar.pop(num)
-            self.no_salidos[num] = obj
+        for num in numeros_a_eliminar:
+            self.numeros_a_jugar.remove(num)
+            self.no_salidos[num.numero] = num
             self.contador.incrementar_supero_limite()
+            print(f"Número {num.numero} eliminado y movido a no_salidos.")
+
+        print(f"Números a jugar después de verificar límites: {[num.numero for num in self.numeros_a_jugar]}")
 
     def actualizar_dataframe(self, numero_ingresado: int):
         """
@@ -162,7 +92,7 @@ class Predictor:
         Muestra los resultados de los números predecidos y no salidos.
         """
         resultados = []
-        for e in self.numeros_predecidos:
+        for e in self.numeros_acertados:
             resultados.append(
                 f"Núm {e.numero} fue ACERTADO, Probabilidad: {e.probabilidad}, Tardancia: {e.tardancia}, Repetidos: {e.repetido}"
             )
@@ -300,3 +230,95 @@ class Predictor:
         logging.debug(f"Número {item.numero} eliminado del historial.")
 
         logging.debug("Finalizada verificación de probabilidad cero.")
+
+    def verificar_resultados(self, numero_salido: int):
+        # Obtener el índice de la última fila del DataFrame
+        indice_actual = len(self.df_nuevo) - 1
+
+        # Variables para marcar vecinos acertados
+        es_vecino1lugar = False
+        es_vecino2lugar = False
+        es_vecino3lugar = False
+        es_vecino4lugar = False
+
+        self.numeros_acertados = []
+        self.contador.incrementar_ingresados(numero_salido)
+        self.no_salidos = {}
+
+        numeros_a_eliminar = set()
+
+        if self.numeros_a_jugar:
+            # Buscar el índice del número en la lista si probabilidad > 0
+            indice_a_jugar = None
+            for i, n in enumerate(self.numeros_a_jugar):
+                if n.numero == numero_salido and n.probabilidad > 0:
+                    indice_a_jugar = i
+                    break
+
+            if indice_a_jugar is not None:
+                numero_acertado = self.numeros_a_jugar.pop(indice_a_jugar)
+                self.numeros_acertados.append(numero_acertado)
+                self.contador.incrementar_predecidos()
+                acierto = True
+
+                # Quitar también de historial_predecidos si está
+                indice_historial = None
+                for j, h in enumerate(self.historial_predecidos):
+                    if h.numero == numero_salido:
+                        indice_historial = j
+                        break
+                if indice_historial is not None:
+                    self.historial_predecidos.pop(indice_historial)
+
+            # Recolectar vecinos a eliminar
+            vecinos = []
+            if self.parametro_juego.lugares_vecinos >= 1:
+                vecinos.extend(vecino1lugar.get(numero_salido, []))
+                if vecinos:
+                    es_vecino1lugar = True
+            if self.parametro_juego.lugares_vecinos >= 2:
+                vecinos.extend(vecino2lugar.get(numero_salido, []))
+                if vecinos:
+                    es_vecino2lugar = True
+            if self.parametro_juego.lugares_vecinos >= 3:
+                vecinos.extend(vecinos3lugar.get(numero_salido, []))
+                if vecinos:
+                    es_vecino3lugar = True
+            if self.parametro_juego.lugares_vecinos >= 4:
+                vecinos.extend(Vecino4lugar.get(numero_salido, []))
+                if vecinos:
+                    es_vecino4lugar = True
+
+            # Agregar vecinos al conjunto de eliminación
+            numeros_a_eliminar.update(vecinos)
+
+            # Eliminar números de `numeros_a_jugar` una sola vez
+            for vecino_numero in numeros_a_eliminar:
+                vecino_obj = next((n for n in self.numeros_a_jugar if n.numero == vecino_numero), None)
+                if vecino_obj:
+                    self.numeros_a_jugar.remove(vecino_obj)
+                    self.numeros_acertados.append(vecino_obj)
+                    # Incrementar contadores según el nivel de vecino
+                    if vecino_numero in vecino1lugar.get(numero_salido, []):
+                        self.contador.incrementar_aciertos_vecinos_1lugar()
+                    if vecino_numero in vecino2lugar.get(numero_salido, []):
+                        self.contador.incrementar_aciertos_vecinos_2lugar()
+                    if vecino_numero in vecinos3lugar.get(numero_salido, []):
+                        self.contador.incrementar_aciertos_vecinos_3lugar()
+                    if vecino_numero in Vecino4lugar.get(numero_salido, []):
+                        self.contador.incrementar_aciertos_vecinos_4lugar()
+
+            self.verificar_limites_numeros()
+
+        # Actualizar la fila existente
+        self.df_nuevo.at[indice_actual, "Acierto"] = "P" if 'acierto' in locals() and acierto else ""
+        self.df_nuevo.at[indice_actual, "V1L"] = "V1L" if es_vecino1lugar else ""
+        self.df_nuevo.at[indice_actual, "V2L"] = "V2L" if es_vecino2lugar else ""
+        self.df_nuevo.at[indice_actual, "V3L"] = "V3L" if es_vecino3lugar else ""
+        self.df_nuevo.at[indice_actual, "V4L"] = "V4L" if es_vecino4lugar else ""
+        self.df_nuevo.at[indice_actual, "Resultados"] = ",".join([str(obj.numero) for obj in self.numeros_acertados])
+        self.df_nuevo.at[indice_actual, "Acertados"] = ",".join([str(obj.numero) for obj in self.numeros_acertados])
+        self.df_nuevo.at[indice_actual, "No salidos"] = ",".join([str(obj.numero) for obj in self.no_salidos.values()])
+
+        if self.numeros_acertados:
+            self.contador.incrementar_aciertos_totales(len(self.numeros_acertados))
