@@ -206,6 +206,7 @@ class Predictor:
                 self.historial_predecidos.remove(numero)
                 nuevo_numero = NumeroJugar(numero=numero.numero, probabilidad=numero.probabilidad)
                 self.numeros_a_jugar.append(nuevo_numero)
+                self.contador.incrementar_jugados()
 
     def verificar_probabilidad_cero(self, predecidos: list):
         """
@@ -213,8 +214,8 @@ class Predictor:
         Si aparecen con probabilidad 0, los elimina de ambas listas.
         """
         logging.debug("Iniciando verificación de probabilidad cero.")
-        numeros_con_prob_0 = {p["numero"] for p in predecidos if p["probabilidad"] == 0}
-        logging.debug(f"Números con probabilidad 0 identificados: {numeros_con_prob_0}")
+        numeros_con_prob_0 = {p["numero"] for p in predecidos if p["probabilidad"] <= 2}
+        logging.debug(f"Números con probabilidad menor e igual a 2 identificados: {numeros_con_prob_0}")
 
         for item in self.numeros_a_jugar[:]:
             if item.numero in numeros_con_prob_0:
@@ -228,7 +229,6 @@ class Predictor:
                 self.historial_predecidos.remove(item)
 
         logging.debug(f"Número {item.numero} eliminado del historial.")
-
         logging.debug("Finalizada verificación de probabilidad cero.")
 
     def verificar_resultados(self, numero_salido: int):

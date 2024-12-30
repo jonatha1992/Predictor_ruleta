@@ -43,7 +43,7 @@ class RuletaPredictorGUI:
                 state="disabled")
 
         parameters = [
-            ("Cantidad de vecinos:", "cantidad_vecinos", "Valores entre (1-4) (0 = sin vecinos)", "0",),
+            ("Cantidad de vecinos:", "cantidad_vecinos", "Valores entre (1-4) (0 = sin vecinos)", "2",),
             ("Límite de tardancia:", "limite_tardancia", "Valores entre (1 al 15) ", "5"),
             ("Umbral de probabilidad:", "umbral_probabilidad", "Valores entre (0-100)", "50",),
         ]
