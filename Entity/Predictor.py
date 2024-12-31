@@ -143,6 +143,11 @@ class Predictor:
             for pred in predecidos:
                 pred["probabilidad"] = int(round(pred["probabilidad"], 2) * 100)
 
+                # Filtrar y mostrar solo predicciones con probabilidad mayor a 2
+            predicciones_filtradas = [pred for pred in predecidos if pred["probabilidad"] > 2]
+            print("Predicciones con probabilidad mayor a 2:")
+            pprint.pprint(predicciones_filtradas)
+
             # Marcar los números actuales como jugados
             for numero_jugado in self.numeros_a_jugar:
                 numero_jugado.jugar()
@@ -160,9 +165,6 @@ class Predictor:
             # Verificar y actualizar números a jugar según las predicciones y el historial
             self.verificar_historial()
             self.verificar_probabilidad_cero(predecidos)
-
-            print("Predicciones:")
-            pprint.pprint(predecidos)
 
             self.historial_predecidos.sort(key=lambda x: x.numero, reverse=True)
 
@@ -204,7 +206,7 @@ class Predictor:
         for numero in self.historial_predecidos[:]:
             if numero.probabilidad >= umbral:
                 self.historial_predecidos.remove(numero)
-                nuevo_numero = NumeroJugar(numero=numero.numero, probabilidad=numero.probabilidad)
+                nuevo_numero = NumeroJugar(numero=numero.numero, probabilidad=numero.probabilidad, repetido=numero.repetido)
                 self.numeros_a_jugar.append(nuevo_numero)
                 self.contador.incrementar_jugados()
 
