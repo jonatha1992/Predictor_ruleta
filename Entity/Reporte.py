@@ -33,7 +33,7 @@ class Reporte:
             "Nros a Predecir": Parametro_Juego.numeros_a_predecir,
             "Nros Anteriores": numeros_anteriores,
             "Cant. Vecinos": Parametro_Juego.lugares_vecinos,
-            "Limite_juego": Parametro_Juego.limite_juego,
+            "Limite_tardancia": Parametro_Juego.limite_tardancia,
             "Probabilidad": Parametro_Juego.umbral_probilidad,
             "Efectividad": contador.sacarEfectividad(),
             "Ruleta": filename,

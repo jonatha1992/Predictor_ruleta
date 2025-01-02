@@ -1,19 +1,34 @@
+from dataclasses import dataclass
 
-class Numero_jugar:
-    def __init__(self, numero, probabilidad_redondeada, vecinos=1):
-        self.numero = numero
-        self.probabilidad = probabilidad_redondeada
-        self.vecinos = (vecinos * 2) + 1
-        self.tardancia = 1
-        self.repetido = 0
 
-    def Jugar(self):
-        self.tardancia += 1
+@dataclass
+class NumeroBase:
+    numero: int
+    probabilidad: float
+    repetido: int = 0
 
-    def Aumentar_probailidad(self, nueva_probabilidad):
+    def actualizar_probabilidad(self, nueva_probabilidad: float):
+        """Actualiza la probabilidad y cuenta repeticiones"""
         self.probabilidad += nueva_probabilidad
         self.repetido += 1
-        self.tardancia -= 1
 
     def __str__(self):
-        return f"(N:{self.numero},P:{self.probabilidad},T:{self.tardancia},R:{self.repetido})"
+        return f"(N:{self.numero}, P:{self.probabilidad}, R:{self.repetido})"
+
+
+@dataclass
+class NumeroJugar(NumeroBase):
+    vecinos: int = 1
+    tardancia: int = 1
+
+    def jugar(self):
+        """Incrementa la tardancia"""
+        self.tardancia += 1
+
+    def __str__(self):
+        return f"(N:{self.numero}, P:{self.probabilidad}, T:{self.tardancia}, R:{self.repetido})"
+
+
+@dataclass
+class NumeroHistorial(NumeroBase):
+    pass

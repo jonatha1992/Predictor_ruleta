@@ -15,9 +15,6 @@ class RuletaPredictorGUI:
         self.master.geometry("900x700")
         self.predictor = None
         self.create_widgets()
-        # if datetime.date.today() > datetime.date(2024, 9, 19):
-        #     messagebox.showwarning("Fin del período de prueba", "El período de prueba ha finalizado. No se pueden ejecutar predicciones.")
-        #     self.master.destroy()
 
     def create_widgets(self):
         # Nuevo frame para contener input_frame y stats_frame
@@ -46,9 +43,9 @@ class RuletaPredictorGUI:
                 state="disabled")
 
         parameters = [
-            ("Cantidad de vecinos:", "cantidad_vecinos", "Valores entre (1-4) (0 = sin vecinos)", "3",),
-            ("Límite de juego:", "limite_juego", "Valores entre (1 al 5) ", "5"),
-            ("Umbral de probabilidad:", "umbral_probabilidad", "Valores entre (10-100)", "50",),
+            ("Cantidad de vecinos:", "cantidad_vecinos", "Valores entre (1-4) (0 = sin vecinos)", "2",),
+            ("Límite de tardancia:", "limite_tardancia", "Valores entre (1 al 15) ", "5"),
+            ("Umbral de probabilidad:", "umbral_probabilidad", "Valores entre (0-100)", "50",),
         ]
 
         self.param_entries = {}
@@ -186,10 +183,10 @@ class RuletaPredictorGUI:
                     value = int(entry.get())
                     if key == "cantidad_vecinos" and not (0 <= value <= 4):
                         raise ValueError("La cantidad de vecinos debe estar entre 0 y 4.")
-                    elif key == "limite_juego" and not (1 <= value <= 5):
-                        raise ValueError("El límite de juego debe estar entre 1 y 5.")
-                    elif key == "umbral_probabilidad" and not (10 <= value <= 100):
-                        raise ValueError("El umbral de probabilidad debe estar entre 20 y 100.")
+                    elif key == "limite_tardancia" and not (1 <= value <= 15):
+                        raise ValueError("El límite de juego debe estar entre 1 y 15.")
+                    elif key == "umbral_probabilidad" and not (0 <= value <= 100):
+                        raise ValueError("El umbral de probabilidad debe estar entre 0 y 100.")
                     params[key] = value
                 except ValueError as e:
                     messagebox.showerror("Error de entrada", str(e))
@@ -198,7 +195,7 @@ class RuletaPredictorGUI:
             parametros_juego = Parametro_Juego(**params)
             ruleta_tipo = self.ruleta_type.get()
             excel_file = get_excel_file(ruleta_tipo)
-            self.predictor = Predictor(excel_file, parametros_juego, hiperparametros=HiperParametros(numerosAnteriores=10))
+            self.predictor = Predictor(excel_file, parametros_juego, hiperparametros=HiperParametros(numerosAnteriores=7))
             self.limpiar_estadisticas()
             self.result_text.insert(
                 tk.END, f"¡Predictor iniciado correctamente!\n"
@@ -323,18 +320,20 @@ class RuletaPredictorGUI:
             for item in self.probabilidades_tree.get_children():
                 self.probabilidades_tree.delete(item)
 
-            for numero in self.predictor.numeros_a_jugar:
-                color = colores_ruleta.get(numero.numero, 'black')
-                print(f"Número: {numero.numero}, Color: {color}")  # Debugging
+            for n in self.predictor.numeros_a_jugar:
 
-                item = self.probabilidades_tree.insert("", "end", values=(numero.numero,
-                                                                          f"{numero.probabilidad}%",
-                                                                          numero.tardancia,
-                                                                          numero.repetido
-                                                                          ))
+                color = colores_ruleta.get(n.numero, 'black')
 
-                self.probabilidades_tree.tag_configure(f'color_{numero.numero}', foreground=color)
-                self.probabilidades_tree.item(item, tags=(f'color_{numero.numero}',))
+                item = self.probabilidades_tree.insert("", "end", values=(
+                    n.numero,
+                    f"{n.probabilidad}%",
+                    n.tardancia,
+                    n.repetido
+                ))
+
+                self.probabilidades_tree.tag_configure(f'color_{n.numero}', foreground=color)
+                self.probabilidades_tree.item(item, tags=(f'color_{n.numero}',))
+
         else:
             for item in self.probabilidades_tree.get_children():
                 self.probabilidades_tree.delete(item)
