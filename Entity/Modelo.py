@@ -5,8 +5,8 @@ import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from Config import get_relative_path
-from Entity.Vecinos import colores_ruleta, vecino1lugar, vecino2lugar, vecinos3lugar, Vecino4lugar
-
+from Entity.Vecinos import colores_ruleta, vecino1lugar, vecino2lugar,tercio, juego_del_0, huerfanos, vecinos
+from sklearn.preprocessing import LabelEncoder
 
 def calcular_frecuencia(df, rango=10):
     """
@@ -29,6 +29,19 @@ def calcular_frecuencia(df, rango=10):
     df['Frecuencia'] = scaler.fit_transform(df[['Frecuencia']])
     return df
 
+def determinar_sector(numero):
+    if numero in tercio:
+        return 'tercio'
+    elif numero in juego_del_0:
+        return 'juego_del_0'
+    elif numero in huerfanos:
+        return 'huerfanos'
+    elif numero in vecinos:
+        return 'vecinos'
+    else:
+        return 'desconocido'
+
+
 
 class Modelo:
     def __init__(self, filename, hiperparametro):
@@ -36,11 +49,15 @@ class Modelo:
         self.filebasename = os.path.splitext(os.path.basename(filename))[0]
         self.hiperparametros = hiperparametro
         self.df = pd.read_excel(filename, sheet_name="Salidos")
+        le = LabelEncoder()
 
         # Añadir características adicionales
         self.df['vecino1'] = self.df['Salidos'].apply(lambda numero: vecino1lugar.get(numero, []))
         self.df['vecino2'] = self.df['Salidos'].apply(lambda numero: vecino2lugar.get(numero, []))
-
+        self.df['sector'] = self.df['Salidos'].apply(determinar_sector)
+        # Codificar la columna 'sector'
+        self.df['sector_encoded'] = le.fit_transform(self.df['sector'])
+        
         # Calcular frecuencias y preparar datos
         self.df = calcular_frecuencia(self.df, rango=10)
         self.numeros = self.df["Salidos"].values.tolist()
@@ -115,6 +132,8 @@ class Modelo:
                     self.frecuencias[idx],   # Frecuencia en rango
                     int(self.numeros[idx] in self.vecinos1[idx]),
                     int(self.numeros[idx] in self.vecinos2[idx]),
+                    self.df['sector_encoded'].iloc[idx]  # Sector codificado
+
 
                 ]
                 secuencia.extend(numero_info)
