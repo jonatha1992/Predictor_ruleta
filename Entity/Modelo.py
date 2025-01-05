@@ -5,8 +5,9 @@ import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from Config import get_relative_path
-from Entity.Vecinos import colores_ruleta, vecino1lugar, vecino2lugar,tercio, juego_del_0, huerfanos, vecinos
+from Entity.Vecinos import colores_ruleta, vecino1lugar, vecino2lugar, sector1, sector2, sector3, sector4, sector5, sector6
 from sklearn.preprocessing import LabelEncoder
+
 
 def calcular_frecuencia(df, rango=10):
     """
@@ -29,18 +30,22 @@ def calcular_frecuencia(df, rango=10):
     df['Frecuencia'] = scaler.fit_transform(df[['Frecuencia']])
     return df
 
+
 def determinar_sector(numero):
-    if numero in tercio:
-        return 'tercio'
-    elif numero in juego_del_0:
-        return 'juego_del_0'
-    elif numero in huerfanos:
-        return 'huerfanos'
-    elif numero in vecinos:
-        return 'vecinos'
+    if numero in sector1:
+        return 'sector1'
+    elif numero in sector2:
+        return 'sector2'
+    elif numero in sector3:
+        return 'sector3'
+    elif numero in sector4:
+        return 'sector4'
+    elif numero in sector5:
+        return 'sector5'
+    elif numero in sector6:
+        return 'sector6'
     else:
         return 'desconocido'
-
 
 
 class Modelo:
@@ -57,7 +62,7 @@ class Modelo:
         self.df['sector'] = self.df['Salidos'].apply(determinar_sector)
         # Codificar la columna 'sector'
         self.df['sector_encoded'] = le.fit_transform(self.df['sector'])
-        
+
         # Calcular frecuencias y preparar datos
         self.df = calcular_frecuencia(self.df, rango=10)
         self.numeros = self.df["Salidos"].values.tolist()

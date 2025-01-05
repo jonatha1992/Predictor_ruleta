@@ -144,8 +144,8 @@ class Predictor:
                 pred["probabilidad"] = int(round(pred["probabilidad"], 2) * 100)
 
                 # Filtrar y mostrar solo predicciones con probabilidad mayor a 2
-            predicciones_filtradas = [pred for pred in predecidos if pred["probabilidad"] > 2]
-            print("Predicciones con probabilidad mayor a 2:")
+            predicciones_filtradas = [pred for pred in predecidos if pred["probabilidad"] > 0]
+            print("Predicciones con probabilidad mayor a 0:")
             pprint.pprint(predicciones_filtradas)
 
             # Marcar los números actuales como jugados
@@ -216,8 +216,8 @@ class Predictor:
         Si aparecen con probabilidad 0, los elimina de ambas listas.
         """
         logging.debug("Iniciando verificación de probabilidad cero.")
-        numeros_con_prob_0 = {p["numero"] for p in predecidos if p["probabilidad"] <= 2}
-        logging.debug(f"Números con probabilidad menor e igual a 2 identificados: {numeros_con_prob_0}")
+        numeros_con_prob_0 = {p["numero"] for p in predecidos if p["probabilidad"] <= 1}
+        logging.debug(f"Números con probabilidad menor e igual a 1 identificados: {numeros_con_prob_0}")
 
         for item in self.numeros_a_jugar[:]:
             if item.numero in numeros_con_prob_0:
