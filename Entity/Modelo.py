@@ -31,6 +31,44 @@ def calcular_frecuencia(df, rango=10):
     return df
 
 
+def calcular_estadisticas_avanzadas(df, rango=10):
+    """
+    Calcula estadísticas avanzadas para mejorar la predicción
+    """
+    # Media móvil ponderada (da más peso a números recientes)
+    weights = np.array([1.2**i for i in range(rango)])
+    weights = weights / weights.sum()
+    df['Media_Ponderada'] = df['Salidos'].rolling(window=rango).apply(
+        lambda x: np.sum(weights[-len(x):] * x))
+
+    # Velocidad de cambio (derivada)
+    df['Velocidad_Cambio'] = df['Salidos'].diff()
+
+    # Aceleración (segunda derivada)
+    df['Aceleracion'] = df['Velocidad_Cambio'].diff()
+
+    # Volatilidad (desviación estándar móvil)
+    df['Volatilidad'] = df['Salidos'].rolling(window=rango).std()
+
+    # Momento (diferencia entre medias móviles)
+    df['MA_Corta'] = df['Salidos'].rolling(window=5).mean()
+    df['MA_Larga'] = df['Salidos'].rolling(window=rango).mean()
+    df['Momento'] = df['MA_Corta'] - df['MA_Larga']
+
+    # Llenar NaN con 0
+    df = df.fillna(0)
+
+    # Normalizar todas las nuevas características
+    scaler = MinMaxScaler()
+    columnas_normalizar = ['Media_Ponderada', 'Velocidad_Cambio', 'Aceleracion',
+                           'Volatilidad', 'Momento']
+
+    for columna in columnas_normalizar:
+        df[columna] = scaler.fit_transform(df[[columna]])
+
+    return df
+
+
 def determinar_sector(numero):
     if numero in sector1:
         return 'sector1'
@@ -69,6 +107,14 @@ class Modelo:
         self.vecinos1 = self.df["vecino1"].values.tolist()
         self.vecinos2 = self.df["vecino2"].values.tolist()
         self.frecuencias = self.df["Frecuencia"].values.tolist()
+
+        # Añadir estadísticas avanzadas
+        self.df = calcular_estadisticas_avanzadas(self.df, rango=10)
+        self.media_ponderada = self.df["Media_Ponderada"].values.tolist()
+        self.velocidad_cambio = self.df["Velocidad_Cambio"].values.tolist()
+        self.aceleracion = self.df["Aceleracion"].values.tolist()
+        self.volatilidad = self.df["Volatilidad"].values.tolist()
+        self.momento = self.df["Momento"].values.tolist()
 
     def crear_y_guardar_modelos(self):
         modelo_nombre = f"Model_{self.filebasename}_N{self.hiperparametros.numerosAnteriores}"
@@ -137,9 +183,12 @@ class Modelo:
                     self.frecuencias[idx],   # Frecuencia en rango
                     int(self.numeros[idx] in self.vecinos1[idx]),
                     int(self.numeros[idx] in self.vecinos2[idx]),
-                    self.df['sector_encoded'].iloc[idx]  # Sector codificado
-
-
+                    self.df['sector_encoded'].iloc[idx],  # Sector codificado
+                    self.media_ponderada[idx],     # Nueva característica
+                    self.velocidad_cambio[idx],    # Nueva característica
+                    self.aceleracion[idx],         # Nueva característica
+                    self.volatilidad[idx],         # Nueva característica
+                    self.momento[idx]              # Nueva característica
                 ]
                 secuencia.extend(numero_info)
 
