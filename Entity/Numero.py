@@ -34,10 +34,10 @@ class NumeroJugar(NumeroBase):
     vecinos: int = 1
     tardancia: int = 1
 
-    @modificar_tardanza
-    def actualizar_probabilidad(self, nueva_probabilidad: float):
-        """Actualiza probabilidad y modifica tardanza"""
-        super().actualizar_probabilidad(nueva_probabilidad)
+    # @modificar_tardanza
+    # def actualizar_probabilidad(self, nueva_probabilidad: float):
+    #     """Actualiza probabilidad y modifica tardanza"""
+    #     super().actualizar_probabilidad(nueva_probabilidad)
 
     def jugar(self):
         """Incrementa la tardancia"""

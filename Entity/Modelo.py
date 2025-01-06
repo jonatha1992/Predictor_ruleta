@@ -95,7 +95,6 @@ class Modelo:
         le = LabelEncoder()
 
         # Añadir características adicionales
-        self.df['vecino1'] = self.df['Salidos'].apply(lambda numero: vecino1lugar.get(numero, []))
         self.df['vecino2'] = self.df['Salidos'].apply(lambda numero: vecino2lugar.get(numero, []))
         self.df['sector'] = self.df['Salidos'].apply(determinar_sector)
         # Codificar la columna 'sector'
@@ -104,7 +103,6 @@ class Modelo:
         # Calcular frecuencias y preparar datos
         self.df = calcular_frecuencia(self.df, rango=10)
         self.numeros = self.df["Salidos"].values.tolist()
-        self.vecinos1 = self.df["vecino1"].values.tolist()
         self.vecinos2 = self.df["vecino2"].values.tolist()
         self.frecuencias = self.df["Frecuencia"].values.tolist()
 
@@ -181,7 +179,6 @@ class Modelo:
                 numero_info = [
                     self.numeros[idx],       # Número actual
                     self.frecuencias[idx],   # Frecuencia en rango
-                    int(self.numeros[idx] in self.vecinos1[idx]),
                     int(self.numeros[idx] in self.vecinos2[idx]),
                     self.df['sector_encoded'].iloc[idx],  # Sector codificado
                     self.media_ponderada[idx],     # Nueva característica
