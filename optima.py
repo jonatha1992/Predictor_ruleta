@@ -9,12 +9,16 @@ from Entity.Parametro import HiperParametros
 import datetime
 
 
+STUDY_NAME = "optimization_study"
+STORAGE_PATH = "sqlite:///optuna_study.db"
+
+
 def objective(trial):
     # Sugerir hiperparámetros
-    numerosAnteriores = trial.suggest_int('numerosAnteriores', 5, 10)
-    gru1 = trial.suggest_int('gru1', 64, 512)
-    gru2 = trial.suggest_int('gru2', 64, 512)
-    gru3 = trial.suggest_int('gru3', 64, 512)
+    numerosAnteriores = trial.suggest_int('numerosAnteriores', 3, 10)
+    gru1 = trial.suggest_int('gru1', 512, 512)
+    gru2 = trial.suggest_int('gru2', 256, 256)
+    gru3 = trial.suggest_int('gru3', 128, 128)
     dropout_rate = trial.suggest_float('dropout_rate', 0.1, 0.5)
     l2_lambda = trial.suggest_float('l2_lambda', 1e-5, 1e-2)
     learning_rate = trial.suggest_float('learning_rate', 1e-5, 1e-2)
@@ -74,8 +78,17 @@ def objective(trial):
 # Tiempo inicial
 tiempo_inicio = datetime.datetime.now()
 
+# Crear o cargar estudio existente
+study = optuna.create_study(
+    study_name=STUDY_NAME,
+    storage=STORAGE_PATH,
+    direction='minimize',
+    load_if_exists=True  # Carga el estudio si existe
+)
+
+print(f"Comenzando optimización desde trial #{len(study.trials)}")
+
 # Configurar y ejecutar estudio
-study = optuna.create_study(direction='minimize')
 study.optimize(
     objective,
     n_trials=50,
