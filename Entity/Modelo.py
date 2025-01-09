@@ -105,7 +105,6 @@ class Modelo:
         self.df = calcular_frecuencia(self.df, rango=10)
         self.numeros = self.df["Salidos"].values.tolist()
         self.vecinos1 = self.df["vecino1"].values.tolist()
-        self.vecinos2 = self.df["vecino2"].values.tolist()
         self.frecuencias = self.df["Frecuencia"].values.tolist()
 
         # Añadir estadísticas avanzadas
@@ -136,7 +135,7 @@ class Modelo:
             tf.keras.layers.Embedding(
                 input_dim=37,  # Números posibles en la ruleta
                 output_dim=48,
-                input_length=self.hiperparametros.numerosAnteriores * 4  # Multiplica por 4 para todas las características
+                input_length=self.hiperparametros.numerosAnteriores * 9  # Multiplica por 4 para todas las características
             ),
             tf.keras.layers.LSTM(
                 self.hiperparametros.gru1, return_sequences=True, kernel_regularizer=tf.keras.regularizers.l2(self.hiperparametros.l2_lambda)),
@@ -182,7 +181,6 @@ class Modelo:
                     self.numeros[idx],       # Número actual
                     self.frecuencias[idx],   # Frecuencia en rango
                     int(self.numeros[idx] in self.vecinos1[idx]),
-                    int(self.numeros[idx] in self.vecinos2[idx]),
                     self.df['sector_encoded'].iloc[idx],  # Sector codificado
                     self.media_ponderada[idx],     # Nueva característica
                     self.velocidad_cambio[idx],    # Nueva característica
