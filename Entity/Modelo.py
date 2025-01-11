@@ -95,7 +95,7 @@ class Modelo:
         le = LabelEncoder()
 
         # Añadir características adicionales
-        self.df['vecino2'] = self.df['Salidos'].apply(lambda numero: vecino2lugar.get(numero, []))
+        self.df['vecino1'] = self.df['Salidos'].apply(lambda numero: vecino1lugar.get(numero, []))
         self.df['sector'] = self.df['Salidos'].apply(determinar_sector)
         # Codificar la columna 'sector'
         self.df['sector_encoded'] = le.fit_transform(self.df['sector'])
