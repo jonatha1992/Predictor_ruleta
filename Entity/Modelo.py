@@ -156,10 +156,10 @@ class Modelo:
 
         callbacks = [
             tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=20),
-            tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=20, min_lr=1e-6),
+            tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=10, min_lr=1e-6),
         ]
 
-        model.fit(X_train, y_train, epochs=self.hiperparametros.epoc, batch_size=self.hiperparametros.batchSize,
+        model.fit(X_train, y_train, epochs=self.hiperparametros.epochs, batch_size=self.hiperparametros.batchSize,
                   validation_data=(X_val, y_val), callbacks=callbacks)
 
         return model
