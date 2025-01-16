@@ -133,18 +133,18 @@ class Modelo:
             tf.keras.layers.Embedding(
                 input_dim=37,  # Números posibles en la ruleta
                 output_dim=48,
-                input_length=self.hiperparametros.numerosAnteriores * 4  # Multiplica por 4 para todas las características
+                input_length=self.hiperparametros.numerosAnteriores * 9  # Multiplica por 4 para todas las características
             ),
             tf.keras.layers.LSTM(
-                self.hiperparametros.gru1, return_sequences=True, kernel_regularizer=tf.keras.regularizers.l2(self.hiperparametros.l2_lambda)),
+                self.hiperparametros.capa1, return_sequences=True, kernel_regularizer=tf.keras.regularizers.l2(self.hiperparametros.l2_lambda)),
             tf.keras.layers.BatchNormalization(),
             tf.keras.layers.Dropout(self.hiperparametros.dropout_rate),
             tf.keras.layers.LSTM(
-                self.hiperparametros.gru2, return_sequences=True, kernel_regularizer=tf.keras.regularizers.l2(self.hiperparametros.l2_lambda)),
+                self.hiperparametros.capa2, return_sequences=True, kernel_regularizer=tf.keras.regularizers.l2(self.hiperparametros.l2_lambda)),
             tf.keras.layers.BatchNormalization(),
             tf.keras.layers.Dropout(self.hiperparametros.dropout_rate),
             tf.keras.layers.LSTM(
-                self.hiperparametros.gru3, kernel_regularizer=tf.keras.regularizers.l2(self.hiperparametros.l2_lambda)),
+                self.hiperparametros.capa3, kernel_regularizer=tf.keras.regularizers.l2(self.hiperparametros.l2_lambda)),
             tf.keras.layers.BatchNormalization(),
             tf.keras.layers.Dropout(self.hiperparametros.dropout_rate),
             tf.keras.layers.Dense(37, activation="softmax"),
@@ -158,7 +158,7 @@ class Modelo:
             tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=20, min_lr=1e-6),
         ]
 
-        model.fit(X_train, y_train, epochs=100, batch_size=self.hiperparametros.batchSize,
+        model.fit(X_train, y_train, epochs=self.hiperparametros.epochs, batch_size=self.hiperparametros.batchSize,
                   validation_data=(X_val, y_val), callbacks=callbacks)
 
         return model

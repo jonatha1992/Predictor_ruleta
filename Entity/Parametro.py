@@ -1,16 +1,16 @@
 class HiperParametros:
     # Inicializa el objeto de la clase con un nombre de archivo y crea el modelo.
     def __init__(self, **kwargs):
-        # hiperparamtros
-        self.numerosAnteriores = kwargs.get("numerosAnteriores", 4)
-        self.gru1 = 512  # Mejor valor encontrado para rnn_units
-        self.gru2 = 256
-        self.gru3 = 128
-        self.l2_lambda = 0.004695  # Mejor valor encontrado
-        self.dropout_rate = 0.2  # Mejor valor encontrado
-        self.learning_rate = 0.000112  # Mejor valor encontrado
-        self.epoc = 100  # Mejor valor encontrado
-        self.batchSize = 500
+        # hiperparametros
+        self.numerosAnteriores = kwargs.get("numerosAnteriores", 10)
+        self.capa1 = kwargs.get("capa1", 512)  # Mejor valor encontrado para rnn_units
+        self.capa2 = kwargs.get("capa2", 256)
+        self.capa3 = kwargs.get("capa3", 128)
+        self.l2_lambda = kwargs.get("l2_lambda", 0.004695)  # Mejor valor encontrado
+        self.dropout_rate = kwargs.get("dropout_rate", 0.2)  # Mejor valor encontrado
+        self.learning_rate = kwargs.get("learning_rate", 0.000112)  # Mejor valor encontrado
+        self.epochs = kwargs.get("epochs", 100)  # Mejor valor encontrado
+        self.batchSize = kwargs.get("batchSize", 500)
 
 
 class Parametro_Juego:
@@ -25,7 +25,6 @@ class Parametro_Juego:
         # Parametros juegos
         self.limite_tardancia = limite_tardancia
         self.lugares_vecinos = cantidad_vecinos
-        # self.numerosAnteriores = 4
         self.numeros_a_predecir = 10
         self.umbral_probilidad = umbral_probabilidad
 
