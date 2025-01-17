@@ -1,5 +1,6 @@
 class HiperParametros:
     def __init__(self, **kwargs):
+<<<<<<< HEAD
         # Arquitectura de la red
         self.numerosAnteriores = kwargs.get("numerosAnteriores", 5)  # Reducido para evitar overfitting
         self.capa1 = kwargs.get("capa1", 320)  # Reducido
@@ -14,6 +15,18 @@ class HiperParametros:
         self.learning_rate = kwargs.get("learning_rate", 0.0001)  # Reducido para convergencia más estable
         self.epochs = kwargs.get("epochs", 100)  # Aumentado para mejor aprendizaje
         self.batchSize = kwargs.get("batchSize", 384)  # Reducido para mejor generalización
+=======
+        # hiperparametros
+        self.numerosAnteriores = kwargs.get("numerosAnteriores", 10)
+        self.capa1 = kwargs.get("capa1", 512)  # Mejor valor encontrado para rnn_units
+        self.capa2 = kwargs.get("capa2", 256)
+        self.capa3 = kwargs.get("capa3", 128)
+        self.l2_lambda = kwargs.get("l2_lambda", 0.004695)  # Mejor valor encontrado
+        self.dropout_rate = kwargs.get("dropout_rate", 0.2)  # Mejor valor encontrado
+        self.learning_rate = kwargs.get("learning_rate", 0.000112)  # Mejor valor encontrado
+        self.epochs = kwargs.get("epochs", 100)  # Mejor valor encontrado
+        self.batchSize = kwargs.get("batchSize", 500)
+>>>>>>> origin/prueba_modelo
 
 
 class Parametro_Juego:
