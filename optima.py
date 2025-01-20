@@ -15,7 +15,7 @@ STORAGE_PATH = "sqlite:///optuna_study.db"
 
 def objective(trial):
     # Sugerir hiperparámetros
-    numerosAnteriores = trial.suggest_int('numerosAnteriores', 3, 10)
+    numerosAnteriores = trial.suggest_int('numerosAnteriores', 5, 10)
     capa1 = trial.suggest_int('capa1', 128, 512, step=64)
     capa2 = trial.suggest_int('capa2', 64, 256, step=64)
     capa3 = trial.suggest_int('capa3', 32, 128, step=32)
@@ -68,28 +68,28 @@ def objective(trial):
         'val_accuracy': [],
         'val_loss': []
     }
-    for fold in range(3):
-        X_t, X_v, y_t, y_v = train_test_split(X_train, y_train, test_size=0.2)
-        history = model.fit(
-            X_t, y_t,
-            epochs=epochs,
-            batch_size=batchSize,
-            validation_data=(X_v, y_v),
-            callbacks=callbacks,
-            verbose=0
-        )
-        val_losses.append(min(history.history['val_loss']))
+    X_t, X_v, y_t, y_v = train_test_split(X_train, y_train, test_size=0.2)
+    history = model.fit(
+        X_t, y_t,
+        epochs=epochs,
+        batch_size=batchSize,
+        validation_data=(X_v, y_v),
+        callbacks=callbacks,
+        verbose=0
+    )
+    val_losses.append(min(history.history['val_loss']))
 
-        # Guardar mejores valores
-        metrics['accuracy'].append(max(history.history['accuracy']))
-        metrics['loss'].append(min(history.history['loss']))
-        metrics['val_accuracy'].append(max(history.history['val_accuracy']))
-        metrics['val_loss'].append(min(history.history['val_loss']))
+    # Guardar mejores valores
+    metrics['accuracy'].append(max(history.history['accuracy']))
+    metrics['loss'].append(min(history.history['loss']))
+    metrics['val_accuracy'].append(max(history.history['val_accuracy']))
+    metrics['val_loss'].append(min(history.history['val_loss']))
 
     # Guardar métricas en trial
     for key, values in metrics.items():
-        trial.set_user_attr(key, np.mean(values))
+        trial.set_user_attr(key, values)
 
+    return metrics['val_accuracy']  # Optimizar val_accuracy
     return np.mean(metrics['val_accuracy'])  # Optimizar val_accuracy
 
 
@@ -102,6 +102,8 @@ study = optuna.create_study(
     storage=STORAGE_PATH,
     direction='maximize',
     load_if_exists=True  # Carga el estudio si existe
+
+
 )
 
 print(f"Comenzando optimización desde trial #{len(study.trials)}")
@@ -109,7 +111,7 @@ print(f"Comenzando optimización desde trial #{len(study.trials)}")
 # Configurar y ejecutar estudio
 study.optimize(
     objective,
-    n_trials=100,
+    n_trials=30,
     show_progress_bar=True
 )
 

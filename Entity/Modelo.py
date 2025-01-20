@@ -8,6 +8,10 @@ from Config import get_relative_path
 from Entity.Vecinos import colores_ruleta, vecino1lugar, vecino2lugar, sector1, sector2, sector3, sector4, sector5, sector6
 from sklearn.preprocessing import LabelEncoder
 
+SEED = 42
+np.random.seed(SEED)
+tf.random.set_seed(SEED)
+
 
 def calcular_frecuencia(df, rango=10):
     """
@@ -153,9 +157,24 @@ class Modelo:
         optimizer = tf.keras.optimizers.AdamW(learning_rate=self.hiperparametros.learning_rate)
         model.compile(loss="categorical_crossentropy", optimizer=optimizer, metrics=["accuracy"])
 
+        # callbacks = [
+        #     tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=20),
+        #     tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=20, min_lr=1e-6),
+        # ]
+        # Configurar callbacks
         callbacks = [
-            tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=20),
-            tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=20, min_lr=1e-6),
+            tf.keras.callbacks.EarlyStopping(
+                monitor='val_loss',
+                patience=10,
+                restore_best_weights=True,
+                min_delta=0.001
+            ),
+            tf.keras.callbacks.ReduceLROnPlateau(
+                monitor='val_loss',
+                factor=0.5,
+                patience=5,
+                min_lr=1e-6
+            )
         ]
 
         model.fit(X_train, y_train, epochs=self.hiperparametros.epochs, batch_size=self.hiperparametros.batchSize,

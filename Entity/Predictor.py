@@ -144,8 +144,8 @@ class Predictor:
                 pred["probabilidad"] = int(round(pred["probabilidad"], 2) * 100)
 
                 # Filtrar y mostrar solo predicciones con probabilidad mayor a 2
-            predicciones_filtradas = [pred for pred in predecidos if pred["probabilidad"] > 0]
-            print("Predicciones con probabilidad mayor a 0:")
+            predicciones_filtradas = [pred for pred in predecidos if pred["probabilidad"] > 1]
+            print("Predicciones con probabilidad mayor a 1:")
             pprint.pprint(predicciones_filtradas)
 
             # Marcar los números actuales como jugados
