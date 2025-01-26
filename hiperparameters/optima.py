@@ -137,16 +137,3 @@ mejores_params = {
     'Val Accuracy': [study.best_trial.user_attrs['val_accuracy']],
     'Val Loss': [study.best_trial.user_attrs['val_loss']]
 }
-
-# Crear DataFrame y guardar en Excel
-df = pd.DataFrame(mejores_params)
-df.to_excel('mejores_hiperparametros.xlsx', index=False)
-
-print(f"\nOptimización completada en {tiempo_total.total_seconds() / 60:.2f} minutos")
-print(f"Trials completados: {len(study.trials)}")
-print(f"Mejor pérdida: {study.best_value:.4f}")
-print(f"\nMejores métricas encontradas:")
-print(f"Accuracy: {study.best_trial.user_attrs['accuracy']:.4f}")
-print(f"Loss: {study.best_trial.user_attrs['loss']:.4f}")
-print(f"Val Accuracy: {study.best_trial.user_attrs['val_accuracy']:.4f}")
-print(f"Val Loss: {study.best_trial.user_attrs['val_loss']:.4f}")
