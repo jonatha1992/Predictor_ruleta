@@ -1,4 +1,5 @@
 import os
+import random
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -7,10 +8,6 @@ from sklearn.preprocessing import MinMaxScaler
 from Config import get_relative_path
 from Entity.Vecinos import colores_ruleta, vecino1lugar, vecino2lugar, sector1, sector2, sector3, sector4, sector5, sector6
 from sklearn.preprocessing import LabelEncoder
-
-SEED = 42
-np.random.seed(SEED)
-tf.random.set_seed(SEED)
 
 
 def calcular_frecuencia(df, rango=10):
@@ -130,8 +127,21 @@ class Modelo:
             print(f"El modelo {modelo_nombre} ya existe.")
 
     def _crear_modelo(self):
+        # Set complete seed configuration
+        seed = 42
+        random.seed(seed)
+        tf.random.set_seed(seed)
+        np.random.seed(seed)
+        os.environ['PYTHONHASHSEED'] = str(seed)
+
         secuencias, siguientes_numeros = self._crear_secuencias()
-        X_train, X_val, y_train, y_val = train_test_split(secuencias, siguientes_numeros, test_size=0.2)
+        X_train, X_val, y_train, y_val = train_test_split(
+            secuencias,
+            siguientes_numeros,
+            test_size=0.2,
+            random_state=seed,
+            shuffle=True
+        )
 
         model = tf.keras.Sequential([
             tf.keras.layers.Embedding(
@@ -154,31 +164,51 @@ class Modelo:
             tf.keras.layers.Dense(37, activation="softmax"),
         ])
 
-        optimizer = tf.keras.optimizers.AdamW(learning_rate=self.hiperparametros.learning_rate)
-        model.compile(loss="categorical_crossentropy", optimizer=optimizer, metrics=["accuracy"])
+        optimizer = tf.keras.optimizers.AdamW(
+            learning_rate=self.hiperparametros.learning_rate,
+            beta_1=0.9,
+            beta_2=0.999,
+            epsilon=1e-07
+        )
 
-        # callbacks = [
-        #     tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=20),
-        #     tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=20, min_lr=1e-6),
-        # ]
-        # Configurar callbacks
+        # Remove problematic thread configuration
+        # tf.config.threading.set_inter_op_parallelism_threads(1)
+        # tf.config.threading.set_intra_op_parallelism_threads(1)
+
+        model.compile(
+            loss="categorical_crossentropy",
+            optimizer=optimizer,
+            metrics=["accuracy"]
+        )
+
         callbacks = [
             tf.keras.callbacks.EarlyStopping(
                 monitor='val_loss',
-                patience=10,
+                patience=15,
                 restore_best_weights=True,
-                min_delta=0.001
+                min_delta=0.0001,
+                mode='min'
             ),
             tf.keras.callbacks.ReduceLROnPlateau(
                 monitor='val_loss',
-                factor=0.5,
-                patience=5,
-                min_lr=1e-6
+                factor=0.2,
+                patience=7,
+                min_lr=1e-7,
+                mode='min'
             )
         ]
 
-        model.fit(X_train, y_train, epochs=self.hiperparametros.epochs, batch_size=self.hiperparametros.batchSize,
-                  validation_data=(X_val, y_val), callbacks=callbacks)
+        # Add deterministic training
+        history = model.fit(
+            X_train,
+            y_train,
+            epochs=self.hiperparametros.epochs,
+            batch_size=self.hiperparametros.batchSize,
+            validation_data=(X_val, y_val),
+            callbacks=callbacks,
+            verbose=1,
+            shuffle=True
+        )
 
         return model
 
