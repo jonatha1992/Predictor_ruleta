@@ -121,7 +121,7 @@ class Predictor:
 
     def predecir(self):
         """
-        Genera predicciones a partir del modelo, actualiza el historial y los números a jugar.
+        Genera predicciones a partir del modelo y actualiza los números a jugar.
         """
         if self.contador.ingresados > self.hiperparametros.numerosAnteriores:
             # Crear la secuencia de entrada para el modelo
@@ -143,37 +143,53 @@ class Predictor:
             for pred in predecidos:
                 pred["probabilidad"] = int(round(pred["probabilidad"], 2) * 100)
 
-                # Filtrar y mostrar solo predicciones con probabilidad mayor a 2
-            predicciones_filtradas = [pred for pred in predecidos if pred["probabilidad"] > 1]
-            print("Predicciones con probabilidad mayor a 1:")
+            # Filtrar y mostrar solo predicciones con probabilidad mayor al umbral
+            umbral_probabilidad = self.parametro_juego.umbral_probilidad
+            predicciones_filtradas = [pred for pred in predecidos if pred["probabilidad"] >= umbral_probabilidad]
+            print(f"Predicciones con probabilidad mayor o igual a {umbral_probabilidad}:")
             pprint.pprint(predicciones_filtradas)
 
             # Marcar los números actuales como jugados
             for numero_jugado in self.numeros_a_jugar:
                 numero_jugado.jugar()
 
-            self.historial_predecidos.sort(key=lambda x: x.numero, reverse=True)
-
-            if self.historial_predecidos:
-                print("Historial antes:")
-                for num in self.historial_predecidos:
-                    print(f"numero {num.numero}, probabilidad {num.probabilidad}")
-                    # Actualizar el historial con las predicciones actuales
-
-            self.actualizar_historial(predecidos)
-
-            # Verificar y actualizar números a jugar según las predicciones y el historial
-            self.verificar_historial()
-            self.verificar_probabilidad_cero(predecidos)
-
-            self.historial_predecidos.sort(key=lambda x: x.numero, reverse=True)
+            # Añadir los números filtrados a la lista de números a jugar
+            for pred in predicciones_filtradas:
+                numero_existente = next((n for n in self.numeros_a_jugar if n.numero == pred["numero"]), None)
+                if numero_existente:
+                    numero_existente.actualizar_probabilidad(pred["probabilidad"])
+                else:
+                    nuevo_numero = NumeroJugar(numero=pred["numero"], probabilidad=pred["probabilidad"])
+                    self.numeros_a_jugar.append(nuevo_numero)
+                    self.contador.incrementar_jugados()
 
             # Ordenar números a jugar por probabilidad descendente
-            self.numeros_a_jugar.sort(key=lambda x: x.numero, reverse=True)
+            self.numeros_a_jugar.sort(key=lambda x: x.probabilidad, reverse=True)
 
-            print("Historial posterior:")
-            for num in self.historial_predecidos:
+            print("Números a jugar:")
+            for num in self.numeros_a_jugar:
                 print(f"numero {num.numero}, probabilidad {num.probabilidad}")
+
+            # # Verificar y eliminar números con probabilidad cero
+            self.verificar_probabilidad_cero(predecidos)
+
+    def verificar_probabilidad_cero(self, predecidos: list):
+        """
+        Verifica los números que ya están en numeros_a_jugar.
+        Si aparecen con probabilidad 0, los elimina de la lista.
+        """
+        logging.debug("Iniciando verificación de probabilidad cero.")
+        numeros_con_prob_0 = {p["numero"] for p in predecidos if p["probabilidad"] <= 1}
+        logging.debug(f"Números con probabilidad menor e igual a 1 identificados: {numeros_con_prob_0}")
+
+        for item in self.numeros_a_jugar[:]:
+            if item.numero in numeros_con_prob_0:
+                self.numeros_a_jugar.remove(item)
+                self.no_salidos[item.numero] = item
+                self.contador.incrementar_supero_limite()
+                logging.debug(f"Número {item.numero} movido a no_salidos.")
+
+        logging.debug("Finalizada verificación de probabilidad cero.")
 
     def actualizar_historial(self, predecidos: list):
         for pred in predecidos:
@@ -209,29 +225,6 @@ class Predictor:
                 nuevo_numero = NumeroJugar(numero=numero.numero, probabilidad=numero.probabilidad, repetido=numero.repetido)
                 self.numeros_a_jugar.append(nuevo_numero)
                 self.contador.incrementar_jugados()
-
-    def verificar_probabilidad_cero(self, predecidos: list):
-        """
-        Verifica los números que ya están en numeros_a_jugar o historial.
-        Si aparecen con probabilidad 0, los elimina de ambas listas.
-        """
-        logging.debug("Iniciando verificación de probabilidad cero.")
-        numeros_con_prob_0 = {p["numero"] for p in predecidos if p["probabilidad"] <= 1}
-        logging.debug(f"Números con probabilidad menor e igual a 1 identificados: {numeros_con_prob_0}")
-
-        for item in self.numeros_a_jugar[:]:
-            if item.numero in numeros_con_prob_0:
-                self.numeros_a_jugar.remove(item)
-                self.no_salidos[item.numero] = item
-                self.contador.incrementar_supero_limite()
-                logging.debug(f"Número {item.numero} movido a no_salidos.")
-
-        for item in self.historial_predecidos[:]:
-            if item.numero in numeros_con_prob_0:
-                self.historial_predecidos.remove(item)
-
-        logging.debug(f"Número {item.numero} eliminado del historial.")
-        logging.debug("Finalizada verificación de probabilidad cero.")
 
     def verificar_resultados(self, numero_salido: int):
         # Obtener el índice de la última fila del DataFrame
