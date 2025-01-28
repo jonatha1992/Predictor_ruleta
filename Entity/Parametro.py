@@ -6,11 +6,11 @@ class HiperParametros:
         self.capa1 = kwargs.get("capa1", 384)  # Mejor valor encontrado para rnn_units
         self.capa2 = kwargs.get("capa2", 256)
         self.capa3 = kwargs.get("capa3", 128)
-        self.l2_lambda = kwargs.get("l2_lambda", 0.008640737182527825)  # Mejor valor encontrado
-        self.dropout_rate = kwargs.get("dropout_rate", 0.3875188255460017)  # Mejor valor encontrado
-        self.learning_rate = kwargs.get("learning_rate", 0.00016993366812604327)  # Mejor valor encontrado
+        self.l2_lambda = kwargs.get("l2_lambda", 0.007269228133940686)  # Mejor valor encontrado
+        self.dropout_rate = kwargs.get("dropout_rate", 0.29425955535026826)  # Mejor valor encontrado
+        self.learning_rate = kwargs.get("learning_rate", 0.00020040104209528858)  # Mejor valor encontrado
         self.epochs = kwargs.get("epochs", 200)  # Mejor valor encontrado
-        self.batchSize = kwargs.get("batchSize", 256)
+        self.batchSize = kwargs.get("batchSize", 128)
 
 
 class Parametro_Juego:
