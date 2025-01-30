@@ -1,5 +1,5 @@
-from Entity.Modelo import Modelo
-from Entity.Parametro import HiperParametros
+from Entity.modelo import Modelo
+from Entity.parametro import HiperParametros
 from optuna.trial import TrialState
 import optuna
 from sklearn.model_selection import KFold
@@ -9,7 +9,7 @@ import numpy as np
 import random
 import datetime
 import os
-
+from consulta import get_best_combination
 # Environment variables first
 os.environ['PYTHONHASHSEED'] = '42'
 os.environ['TF_DETERMINISTIC_OPS'] = '1'
@@ -103,26 +103,6 @@ def objective(trial):
         return None
 
 
-def save_best_model(study, filename="Data/Electromecanica.xlsx"):
-    """Create and save model with best parameters"""
-    # Get best parameters
-    best_params = HiperParametros(
-        numerosAnteriores=study.best_params['numerosAnteriores'],
-        capa1=study.best_params['capa1'],
-        capa2=study.best_params['capa2'],
-        capa3=study.best_params['capa3'],
-        dropout_rate=study.best_params['dropout_rate'],
-        l2_lambda=study.best_params['l2_lambda'],
-        learning_rate=study.best_params['learning_rate'],
-        batchSize=study.best_params['batchSize'],
-        epochs=study.best_params['epochs']
-    )
-
-    # Create and save optimal model
-    modelo_optimo = Modelo(filename, best_params)
-    modelo_optimo.crear_y_guardar_modelos()
-
-
 # Tiempo inicial
 tiempo_inicio = datetime.datetime.now()
 
@@ -167,9 +147,3 @@ mejores_params = {
     'Val Accuracy': [study.best_trial.user_attrs['val_accuracy']],
     'Val Loss': [study.best_trial.user_attrs['val_loss']]
 }
-
-
-# Save best model
-print("\nCreando modelo con mejores parámetros encontrados...")
-save_best_model(study)
-print("Modelo óptimo guardado!")
