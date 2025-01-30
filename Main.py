@@ -2,10 +2,10 @@ import datetime
 import tkinter as tk
 from tkinter import ttk, messagebox
 import os
-from Entity.Predictor import Predictor
-from Entity.Parametro import HiperParametros, Parametro_Juego
-from Entity.Vecinos import colores_ruleta
-from Config import get_excel_file, get_ruleta_types
+from Entity.predictor import Predictor
+from Entity.parametro import HiperParametros, Parametro_Juego
+from Entity.vecinos import colores_ruleta
+from config import get_excel_file, get_ruleta_types
 
 
 class RuletaPredictorGUI:
