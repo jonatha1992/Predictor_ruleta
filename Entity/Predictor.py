@@ -3,14 +3,14 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 import os
-from Entity.Contador import Contador
-from Entity.Modelo import Modelo
-from Entity.Numero import NumeroJugar, NumeroHistorial  # Asegúrate de que las clases estén en módulos adecuados
+from Entity.contador import Contador
+from Entity.modelo import Modelo
+from Entity.numero import NumeroJugar, NumeroHistorial  # Asegúrate de que las clases estén en módulos adecuados
 from datetime import datetime
-from Entity.Parametro import HiperParametros, Parametro_Juego
-from Entity.Vecinos import vecino1lugar, vecino2lugar, vecinos3lugar, Vecino4lugar, colores_ruleta
-from Entity.Reporte import Reporte
-from Config import get_relative_path
+from Entity.parametro import HiperParametros, Parametro_Juego
+from Entity.vecinos import vecino1lugar, vecino2lugar, vecinos3lugar, Vecino4lugar, colores_ruleta
+from Entity.reporte import Reporte
+from config import get_relative_path
 import pprint
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -142,6 +142,7 @@ class Predictor:
             # Redondear probabilidades y procesar los números
             for pred in predecidos:
                 pred["probabilidad"] = int(round(pred["probabilidad"], 2) * 100)
+            pprint.pprint(predecidos)
 
             # Filtrar y mostrar solo predicciones con probabilidad mayor al umbral
             umbral_probabilidad = self.parametro_juego.umbral_probilidad
