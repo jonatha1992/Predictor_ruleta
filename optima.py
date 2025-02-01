@@ -9,7 +9,7 @@ import numpy as np
 import random
 import datetime
 import os
-from consulta import get_best_combination
+
 # Environment variables first
 os.environ['PYTHONHASHSEED'] = '42'
 os.environ['TF_DETERMINISTIC_OPS'] = '1'
@@ -112,8 +112,6 @@ study = optuna.create_study(
     storage=STORAGE_PATH,
     direction='maximize',
     load_if_exists=True  # Carga el estudio si existe
-
-
 )
 
 print(f"Comenzando optimización desde trial #{len(study.trials)}")
