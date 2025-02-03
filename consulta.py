@@ -37,7 +37,7 @@ def get_best_combination():
     best_params = {}
     for param_name, param_value in results:
         best_params[param_name] = param_value
-
+        print(param_name, param_value)
     return best_params
 
 
