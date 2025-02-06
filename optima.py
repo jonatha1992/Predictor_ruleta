@@ -119,7 +119,7 @@ print(f"Comenzando optimización desde trial #{len(study.trials)}")
 # Configurar y ejecutar estudio
 study.optimize(
     objective,
-    n_trials=30,
+    n_trials=100,
     show_progress_bar=True
 )
 
