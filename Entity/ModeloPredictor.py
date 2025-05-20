@@ -73,24 +73,7 @@ def calcular_estadisticas_avanzadas(df, rango=10):
     return df
 
 
-def determinar_sector(numero):
-    if numero in sector1:
-        return 'sector1'
-    elif numero in sector2:
-        return 'sector2'
-    elif numero in sector3:
-        return 'sector3'
-    elif numero in sector4:
-        return 'sector4'
-    elif numero in sector5:
-        return 'sector5'
-    elif numero in sector6:
-        return 'sector6'
-    else:
-        return 'desconocido'
-
-
-class Modelo:
+class Modelo_Predictor:
     def __init__(self, filename, hiperparametro):
         self.filename = filename
         self.filebasename = os.path.splitext(os.path.basename(filename))[0]
@@ -100,13 +83,10 @@ class Modelo:
 
         # Añadir características adicionales
         self.df['vecino1'] = self.df['Salidos'].apply(lambda numero: vecino1lugar.get(numero, []))
-        self.df['sector'] = self.df['Salidos'].apply(determinar_sector)
-        self.df['sector_encoded'] = le.fit_transform(self.df['sector'])
 
         # Calcular frecuencias y preparar datos
         self.df = calcular_frecuencia(self.df, rango=10)
         self.numeros = self.df["Salidos"].values.tolist()
-        self.vecinos1 = self.df["vecino1"].values.tolist()
         self.frecuencias = self.df["Frecuencia"].values.tolist()
 
         # Añadir estadísticas avanzadas
@@ -137,7 +117,7 @@ class Modelo:
             tf.keras.layers.Embedding(
                 input_dim=37,  # Números posibles en la ruleta
                 output_dim=48,
-                input_length=self.hiperparametros.numerosAnteriores * 9  # Multiplica por 4 para todas las características
+                input_length=self.hiperparametros.numerosAnteriores * 7  # Multiplica por 4 para todas las características
             ),
             tf.keras.layers.LSTM(
                 self.hiperparametros.capa1, return_sequences=True, kernel_regularizer=tf.keras.regularizers.l2(self.hiperparametros.l2_lambda)),
@@ -157,11 +137,6 @@ class Modelo:
         optimizer = tf.keras.optimizers.AdamW(learning_rate=self.hiperparametros.learning_rate)
         model.compile(loss="categorical_crossentropy", optimizer=optimizer, metrics=["accuracy"])
 
-        # callbacks = [
-        #     tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=20),
-        #     tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=20, min_lr=1e-6),
-        # ]
-        # Configurar callbacks
         callbacks = [
             tf.keras.callbacks.EarlyStopping(
                 monitor='val_loss',
@@ -197,8 +172,6 @@ class Modelo:
                 numero_info = [
                     self.numeros[idx],       # Número actual
                     self.frecuencias[idx],   # Frecuencia en rango
-                    int(self.numeros[idx] in self.vecinos1[idx]),
-                    self.df['sector_encoded'].iloc[idx],  # Sector codificado
                     self.media_ponderada[idx],     # Nueva característica
                     self.velocidad_cambio[idx],    # Nueva característica
                     self.aceleracion[idx],         # Nueva característica

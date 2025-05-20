@@ -1,10 +1,10 @@
-import optuna
-from optuna.trial import TrialState
+# import optuna
+# from optuna.trial import TrialState
 import pandas as pd
 import tensorflow as tf
 import numpy as np
 from sklearn.model_selection import train_test_split
-from Entity.Modelo import Modelo
+from ModeloPredictor import Modelo
 from Entity.Parametro import HiperParametros
 import datetime
 

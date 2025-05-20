@@ -4,7 +4,7 @@ import pandas as pd
 import tensorflow as tf
 import os
 from Entity.Contador import Contador
-from Entity.Modelo import Modelo
+from ModeloPredictor import Modelo
 from Entity.Numero import NumeroJugar, NumeroHistorial  # Asegúrate de que las clases estén en módulos adecuados
 from datetime import datetime
 from Entity.Parametro import HiperParametros, Parametro_Juego
