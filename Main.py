@@ -3,16 +3,11 @@
 Script para crear y guardar el modelo de predicción de la ruleta.
 """
 import os
-<<<<<<< HEAD
-from Entity.Parametro import HiperParametros
-from Entity.ModeloPredictor import Modelo_Predictor
-from Config import get_relative_path
-=======
-from Entity.predictor import Predictor
-from Entity.parametro import HiperParametros, Parametro_Juego
+from Entity.Predictor import Predictor
+from Entity.Parametro import HiperParametros, Parametro_Juego
 from Entity.vecinos import colores_ruleta
-from config import get_excel_file, get_ruleta_types
->>>>>>> 97a89dbe032afb92dd6b01f90af9d8fb21fc0d8b
+from Entity.ModeloPredictor import Modelo_Predictor
+from config import get_excel_file, get_ruleta_types , get_relative_path
 
 
 def main():

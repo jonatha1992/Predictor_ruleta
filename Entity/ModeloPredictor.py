@@ -5,7 +5,6 @@ import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from config import get_relative_path
-from Entity.vecinos import colores_ruleta, vecino1lugar, vecino2lugar, sector1, sector2, sector3, sector4, sector5, sector6
 from sklearn.preprocessing import LabelEncoder
 
 SEED = 42
@@ -74,28 +73,39 @@ def calcular_estadisticas_avanzadas(df, rango=10):
 
 
 class Modelo_Predictor:
+    def cargar_modelo(self, modelo_path):
+        """
+        Carga un modelo previamente guardado desde la ruta especificada.
+        """
+        import tensorflow as tf
+        self.modelo = tf.keras.models.load_model(modelo_path)
     def __init__(self, filename, hiperparametro):
         self.filename = filename
-        self.filebasename = os.path.splitext(os.path.basename(filename))[0]
         self.hiperparametros = hiperparametro
-        self.df = pd.read_excel(filename, sheet_name="Salidos")
-        le = LabelEncoder()
+        self.modelo = None
+        # Si filename es None, solo se usará para cargar modelo y predecir
+        if filename is not None:
+            self.filebasename = os.path.splitext(os.path.basename(filename))[0]
+            self.df = pd.read_excel(filename, sheet_name="Salidos")
+            le = LabelEncoder()
 
-        # Añadir características adicionales
-        self.df['vecino1'] = self.df['Salidos'].apply(lambda numero: vecino1lugar.get(numero, []))
+            # Añadir características adicionales
+            self.df['vecino1'] = self.df['Salidos'].apply(lambda numero: vecino1lugar.get(numero, []))
 
-        # Calcular frecuencias y preparar datos
-        self.df = calcular_frecuencia(self.df, rango=10)
-        self.numeros = self.df["Salidos"].values.tolist()
-        self.frecuencias = self.df["Frecuencia"].values.tolist()
+            # Calcular frecuencias y preparar datos
+            self.df = calcular_frecuencia(self.df, rango=10)
+            self.numeros = self.df["Salidos"].values.tolist()
+            self.frecuencias = self.df["Frecuencia"].values.tolist()
 
-        # Añadir estadísticas avanzadas
-        self.df = calcular_estadisticas_avanzadas(self.df, rango=10)
-        self.media_ponderada = self.df["Media_Ponderada"].values.tolist()
-        self.velocidad_cambio = self.df["Velocidad_Cambio"].values.tolist()
-        self.aceleracion = self.df["Aceleracion"].values.tolist()
-        self.volatilidad = self.df["Volatilidad"].values.tolist()
-        self.momento = self.df["Momento"].values.tolist()
+            # Añadir estadísticas avanzadas
+            self.df = calcular_estadisticas_avanzadas(self.df, rango=10)
+            self.media_ponderada = self.df["Media_Ponderada"].values.tolist()
+            self.velocidad_cambio = self.df["Velocidad_Cambio"].values.tolist()
+            self.aceleracion = self.df["Aceleracion"].values.tolist()
+            self.volatilidad = self.df["Volatilidad"].values.tolist()
+            self.momento = self.df["Momento"].values.tolist()
+        else:
+            self.filebasename = None
 
     def crear_y_guardar_modelos(self):
         modelo_nombre = f"Model_{self.filebasename}_N{self.hiperparametros.numerosAnteriores}"
